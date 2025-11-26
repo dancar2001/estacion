@@ -91,7 +91,7 @@ const App = () => {
       console.log('Intentando login con usuario:', username);
 
       // Obtener token del backend
-      const response = await axios.post('http://localhost:8000/api-token-auth/', {
+      const response = await axios.post('https://dancar.pythonanywhere.com/api-token-auth/', {
         username,
         password,
       });
