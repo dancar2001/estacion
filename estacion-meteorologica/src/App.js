@@ -11,7 +11,7 @@ import AdministrativosView from './components/AdministrativosView';
 // CONFIGURACIÓN DE API
 // ============================================================================
 
-const API_BASE_URL = 'https://dancar.pythonanywhere.com/';
+const API_BASE_URL = 'https://dancar.pythonanywhere.com';
 
 // Configurar axios con token
 const setupAxios = (token) => {
