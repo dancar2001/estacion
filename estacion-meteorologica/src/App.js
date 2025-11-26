@@ -11,7 +11,7 @@ import AdministrativosView from './components/AdministrativosView';
 // CONFIGURACIÓN DE API
 // ============================================================================
 
-const API_BASE_URL = 'https://dancar.pythonanywhere.com';
+const API_BASE_URL = 'https://dancar.pythonanywhere.com/api';
 
 // Configurar axios con token
 const setupAxios = (token) => {
@@ -91,7 +91,7 @@ const App = () => {
       console.log('Intentando login con usuario:', username);
 
       // Obtener token del backend
-      const response = await axios.post('https://dancar.pythonanywhere.com/api-token-auth/', {
+      const response = await axios.post(`${API_BASE_URL}/token/`, {
         username,
         password,
       });
