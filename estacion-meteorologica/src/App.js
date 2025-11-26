@@ -47,7 +47,7 @@ const App = () => {
           
           try {
             // Intentar obtener datos del usuario desde el Backend
-            const response = await axios.get(`${API_BASE_URL}/me/`);
+            const response = await axios.get(`${API_BASE_URL}/api/me/`);
             
             console.log('Usuario obtenido:', response.data);
             
