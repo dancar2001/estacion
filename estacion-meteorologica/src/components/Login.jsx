@@ -45,7 +45,7 @@ const Login = ({ onLogin, error }) => {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="admin"
+              placeholder="ingrese usuario"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
               disabled={loading}
               required
@@ -89,7 +89,7 @@ const Login = ({ onLogin, error }) => {
         <div className="mt-6 p-4 bg-green-50 rounded-lg text-sm text-gray-600 border border-green-200">
           <p className="font-semibold mb-2 text-green-700">🔐 Credenciales de prueba:</p>
           <p>Usuario: <code className="bg-gray-200 px-2 py-1 rounded text-xs font-mono">admin</code></p>
-          <p>Contraseña: <code className="bg-gray-200 px-2 py-1 rounded text-xs font-mono">admin123</code></p>
+          <p>Contraseña: <code className="bg-gray-200 px-2 py-1 rounded text-xs font-mono">1234</code></p>
         </div>
 
         {/* FOOTER */}
