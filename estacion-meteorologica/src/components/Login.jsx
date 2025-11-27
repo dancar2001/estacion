@@ -31,7 +31,7 @@ const Login = ({ onLogin, error }) => {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-green-700">🌾</h1>
           <h2 className="text-2xl font-bold text-gray-800 mt-2">Estación Meteorológica</h2>
-          <p className="text-gray-600 mt-2">Campus Milagro - UAA</p>
+          <p className="text-gray-600 mt-2">Campus Milagro </p>
         </div>
 
         {/* FORMULARIO */}
