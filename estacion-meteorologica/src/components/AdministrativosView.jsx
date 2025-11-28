@@ -228,7 +228,7 @@ const DashboardProfesor = ({ mockHistoricalData, stats, mockCropRecommendations,
               <Line type="monotone" dataKey="hum" stroke="#3b82f6" name="Humedad (%)" strokeWidth={2} />
               <Line type="monotone" dataKey="rad" stroke="#f59e0b" name="Radiación (W/m²)" strokeWidth={2} />
               <Line type="monotone" dataKey="precip" stroke="#06b6d4" name="Precipitación (mm)" strokeWidth={2} />
-              <Line type="monotone" dataKey="viento" stroke="#8b5cf6" name="Viento (m/s)" strokeWidth={2} />
+              <Line type="monotone" dataKey="viento" stroke="#8b5cf6" name="Humedad del Suelo" strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         </div>
