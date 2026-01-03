@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   UserPlus, Users, BarChart3, TrendingUp, Thermometer, Droplets,
-  Sun, CloudRain, Wind, Activity, RefreshCw
+  Sun, CloudRain, Wind, Activity, RefreshCw, Database
 } from 'lucide-react';
 import axios from 'axios';
 import Papa from 'papaparse';
@@ -13,7 +13,85 @@ import PredictorCultivos from './PredictorCultivos';
 import AnalisisKMeans from './AnalisisKMeans';
 
 // ============================================================================
-// ✅ COMPONENTES EXTRAÍDOS FUERA
+// URL DE FIREBASE
+// ============================================================================
+const FIREBASE_URL = "https://bdclimatico-cdb27-default-rtdb.firebaseio.com/sensores.json";
+
+// ============================================================================
+// MODAL EDITAR USUARIO
+// ============================================================================
+const ModalEditarUsuario = ({ usuario, onClose, onSave, loading }) => {
+  const [form, setForm] = useState({
+    first_name: usuario.first_name || "",
+    email: usuario.email || "",
+    rol: usuario.rol || "estudiante",
+  });
+
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(usuario.id, form);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
+      <div className="bg-white p-6 rounded-xl w-96 shadow-lg">
+        <h2 className="text-xl font-bold mb-4">Editar Usuario</h2>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <input
+            type="text"
+            name="first_name"
+            value={form.first_name}
+            onChange={handleChange}
+            placeholder="Nombre"
+            className="w-full px-3 py-2 border rounded"
+          />
+
+          <input
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            placeholder="Correo"
+            className="w-full px-3 py-2 border rounded"
+          />
+
+          <select
+            name="rol"
+            value={form.rol}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded"
+          >
+            <option value="estudiante">Estudiante</option>
+            <option value="profesor">Profesor</option>
+            <option value="administrativo">Administrativo</option>
+          </select>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            {loading ? "Guardando..." : "Guardar Cambios"}
+          </button>
+        </form>
+
+        <button
+          onClick={onClose}
+          className="w-full mt-3 text-gray-600 underline"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// COMPONENTES EXTRAÍDOS
 // ============================================================================
 
 const CrearUsuarioTab = ({ formData, handleInputChange, handleSubmit, loading, error, success }) => (
@@ -100,16 +178,58 @@ const CrearUsuarioTab = ({ formData, handleInputChange, handleSubmit, loading, e
   </div>
 );
 
-const DashboardEstudiante = ({ ultimoRegistro, stats, datos, mockCropRecommendations }) => (
+const DashboardEstudiante = ({ ultimoRegistro, stats, datos, mockCropRecommendations, ultimoFirebase, datosCSV, datosFirebaseArray }) => (
   <div className="space-y-6">
+    {/* ⭐ FIREBASE TIEMPO REAL */}
+    {ultimoFirebase && (
+      <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl shadow-lg p-6 text-white">
+        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <Database size={24} />
+          🔥 Sensores en Tiempo Real
+        </h3>
+        
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
+            <Thermometer size={20} />
+            <p className="text-3xl font-bold mt-2">{ultimoFirebase.temperatura}°C</p>
+            <span className="text-sm">Temperatura</span>
+          </div>
+          <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
+            <Droplets size={20} />
+            <p className="text-3xl font-bold mt-2">{ultimoFirebase.humedad}%</p>
+            <span className="text-sm">Humedad</span>
+          </div>
+          <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
+            <Activity size={20} />
+            <p className="text-3xl font-bold mt-2">{ultimoFirebase.humedad_suelo}%</p>
+            <span className="text-sm">Hum. Suelo</span>
+          </div>
+          <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
+            <CloudRain size={20} />
+            <p className="text-3xl font-bold mt-2">{ultimoFirebase.lluvia} mm</p>
+            <span className="text-sm">Lluvia</span>
+          </div>
+          <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
+            <Sun size={20} />
+            <p className="text-3xl font-bold mt-2">{ultimoFirebase.uvIndex}</p>
+            <span className="text-sm">UV</span>
+          </div>
+        </div>
+      </div>
+    )}
+
     <div className="bg-white rounded-xl shadow-lg p-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
         <TrendingUp className="text-green-600" size={28} />
-        📊 Variables Meteorológicas en Tiempo Real
+        📊 Variables Meteorológicas
       </h2>
-      <p className="text-sm text-gray-500 mb-6">
-        Última actualización: {ultimoRegistro?.date || 'N/A'}
-      </p>
+      
+      {/* Info de datos */}
+      <div className="flex flex-wrap items-center gap-4 text-sm mb-6">
+        <span className="text-gray-500">📁 {datosCSV?.length || 0} CSV</span>
+        <span className="text-gray-500">🔥 {datosFirebaseArray?.length || 0} Firebase</span>
+        <span className="text-purple-600 font-bold">📊 {datos.length} TOTAL</span>
+      </div>
 
       {stats && (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -137,7 +257,7 @@ const DashboardEstudiante = ({ ultimoRegistro, stats, datos, mockCropRecommendat
               <span className="text-sm font-medium text-yellow-700">Radiación Solar</span>
             </div>
             <p className="text-4xl font-bold text-yellow-700">{Math.round(stats.solarRadiation)}</p>
-            <p className="text-xs text-yellow-600 mt-2">W/m² - 6-8h luz/día</p>
+            <p className="text-xs text-yellow-600 mt-2">W/m²</p>
           </div>
 
           <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg border border-green-200">
@@ -146,7 +266,6 @@ const DashboardEstudiante = ({ ultimoRegistro, stats, datos, mockCropRecommendat
               <span className="text-sm font-medium text-green-700">Humedad del Suelo</span>
             </div>
             <p className="text-4xl font-bold text-green-700">{stats.soilMoisture}%</p>
-            <p className="text-xs text-green-600 mt-2">Nivel adecuado</p>
           </div>
 
           <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 p-6 rounded-lg border border-cyan-200">
@@ -155,16 +274,16 @@ const DashboardEstudiante = ({ ultimoRegistro, stats, datos, mockCropRecommendat
               <span className="text-sm font-medium text-cyan-700">Precipitación</span>
             </div>
             <p className="text-4xl font-bold text-cyan-700">{stats.precipitation}</p>
-            <p className="text-xs text-cyan-600 mt-2">mm acumulados hoy</p>
+            <p className="text-xs text-cyan-600 mt-2">mm</p>
           </div>
 
           <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-lg border border-purple-200">
             <div className="flex items-center justify-between mb-2">
-              <Wind className="text-purple-600" size={32} />
-              <span className="text-sm font-medium text-purple-700">Registros CSV</span>
+              <BarChart3 className="text-purple-600" size={32} />
+              <span className="text-sm font-medium text-purple-700">Total Registros</span>
             </div>
             <p className="text-4xl font-bold text-purple-700">{datos.length}</p>
-            <p className="text-xs text-purple-600 mt-2">datos históricos</p>
+            <p className="text-xs text-purple-600 mt-2">CSV + Firebase</p>
           </div>
         </div>
       )}
@@ -204,18 +323,18 @@ const DashboardEstudiante = ({ ultimoRegistro, stats, datos, mockCropRecommendat
   </div>
 );
 
-const DashboardProfesor = ({ mockHistoricalData, stats, mockCropRecommendations, ultimoRegistro, datos }) => (
+const DashboardProfesor = ({ mockHistoricalData, stats, mockCropRecommendations, ultimoRegistro, datos, ultimoFirebase }) => (
   <div className="space-y-6">
     <div className="bg-white rounded-xl shadow-lg p-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
         <BarChart3 className="text-blue-600" size={28} />
-        📈 Análisis de Datos Históricos
+        📈 Análisis de Datos Históricos (CSV + Firebase)
       </h2>
 
       {mockHistoricalData.length > 0 && (
         <div className="mb-8">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">
-            📊 Tendencias de Variables Climáticas
+            📊 Tendencias Climáticas
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={mockHistoricalData}>
@@ -226,9 +345,7 @@ const DashboardProfesor = ({ mockHistoricalData, stats, mockCropRecommendations,
               <Legend />
               <Line type="monotone" dataKey="temp" stroke="#ef4444" name="Temperatura (°C)" strokeWidth={2} />
               <Line type="monotone" dataKey="hum" stroke="#3b82f6" name="Humedad (%)" strokeWidth={2} />
-              <Line type="monotone" dataKey="rad" stroke="#f59e0b" name="Radiación (W/m²)" strokeWidth={2} />
               <Line type="monotone" dataKey="precip" stroke="#06b6d4" name="Precipitación (mm)" strokeWidth={2} />
-              <Line type="monotone" dataKey="viento" stroke="#8b5cf6" name="Humedad del Suelo" strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -250,7 +367,7 @@ const DashboardProfesor = ({ mockHistoricalData, stats, mockCropRecommendations,
           </div>
 
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">📊 Estadísticas del Período</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">📊 Estadísticas</h3>
             <div className="space-y-4">
               <div className="flex justify-between bg-white p-3 rounded">
                 <span className="text-gray-700">Temperatura Promedio:</span>
@@ -261,16 +378,14 @@ const DashboardProfesor = ({ mockHistoricalData, stats, mockCropRecommendations,
                 <span className="font-bold text-gray-900">{stats.humedadPromedio}%</span>
               </div>
               <div className="flex justify-between bg-white p-3 rounded">
-                <span className="text-gray-700">Radiación Promedio:</span>
-                <span className="font-bold text-gray-900">{stats.radiacionPromedio} W/m²</span>
-              </div>
-              <div className="flex justify-between bg-white p-3 rounded">
                 <span className="text-gray-700">Total Registros:</span>
                 <span className="font-bold text-gray-900">{datos.length}</span>
               </div>
               <div className="flex justify-between bg-white p-3 rounded">
                 <span className="text-gray-700">Período:</span>
-                <span className="font-bold text-gray-900">{datos.length > 0 ? `${datos[0].date} a ${datos[datos.length - 1].date}` : 'N/A'}</span>
+                <span className="font-bold text-gray-900 text-sm">
+                  {datos.length > 0 ? `${datos[0].date} a ${datos[datos.length - 1].date}` : 'N/A'}
+                </span>
               </div>
             </div>
           </div>
@@ -278,13 +393,13 @@ const DashboardProfesor = ({ mockHistoricalData, stats, mockCropRecommendations,
       )}
     </div>
 
-    {ultimoRegistro && (
+    {(ultimoFirebase || ultimoRegistro) && (
       <PredictorCultivos
-        temperatura={ultimoRegistro.temperatura}
-        radiacion={ultimoRegistro.radiacion_solar / 100}
-        humedadSuelo={ultimoRegistro.humedad_suelo}
-        humedadRelativa={ultimoRegistro.humedad}
-        pluviometria={ultimoRegistro.precipitacion}
+        temperatura={ultimoFirebase?.temperatura || ultimoRegistro?.temperatura || 0}
+        radiacion={ultimoFirebase ? (ultimoFirebase.uvIndex <= 2 ? 4.5 : ultimoFirebase.uvIndex <= 5 ? 4.8 : 5.0) : (ultimoRegistro?.radiacion_solar / 1000 || 0)}
+        humedadSuelo={ultimoFirebase?.humedad_suelo || ultimoRegistro?.humedad_suelo || 0}
+        humedadRelativa={ultimoFirebase?.humedad || ultimoRegistro?.humedad || 0}
+        pluviometria={ultimoFirebase?.lluvia || ultimoRegistro?.precipitacion || 0}
       />
     )}
   </div>
@@ -293,6 +408,22 @@ const DashboardProfesor = ({ mockHistoricalData, stats, mockCropRecommendations,
 const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
   const [eliminando, setEliminando] = useState(false);
   const [mensajeEliminar, setMensajeEliminar] = useState(null);
+  const [usuarioEditar, setUsuarioEditar] = useState(null);
+  const [editando, setEditando] = useState(false);
+
+  const handleGuardarEdicion = async (id, data) => {
+    try {
+      setEditando(true);
+      await axios.put(`${apiBaseUrl}/usuarios/${id}/editar/`, data);
+      setUsuarioEditar(null);
+      if (onRefresh) await onRefresh();
+      alert("Usuario actualizado correctamente");
+    } catch (err) {
+      alert("Error al actualizar usuario");
+    } finally {
+      setEditando(false);
+    }
+  };
 
   const handleEliminarUsuario = async (usuarioId, usuarioNombre) => {
     const confirmar = window.confirm(
@@ -304,25 +435,13 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
     try {
       setEliminando(true);
       setMensajeEliminar(null);
-
       await axios.delete(`${apiBaseUrl}/usuarios/${usuarioId}/`);
-
-      setMensajeEliminar({
-        tipo: 'success',
-        mensaje: `✅ ${usuarioNombre} eliminado exitosamente`
-      });
-
-      if (onRefresh) {
-        await onRefresh();
-      }
-
+      setMensajeEliminar({ tipo: 'success', mensaje: `✅ ${usuarioNombre} eliminado exitosamente` });
+      if (onRefresh) await onRefresh();
       setTimeout(() => setMensajeEliminar(null), 3000);
     } catch (err) {
       const errorMsg = err.response?.data?.error || err.message || 'Error al eliminar usuario';
-      setMensajeEliminar({
-        tipo: 'error',
-        mensaje: `❌ ${errorMsg}`
-      });
+      setMensajeEliminar({ tipo: 'error', mensaje: `❌ ${errorMsg}` });
     } finally {
       setEliminando(false);
     }
@@ -336,13 +455,11 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
       </h2>
 
       {mensajeEliminar && (
-        <div
-          className={`mb-4 px-4 py-3 rounded border ${
-            mensajeEliminar.tipo === 'success'
-              ? 'bg-green-100 border-green-400 text-green-700'
-              : 'bg-red-100 border-red-400 text-red-700'
-          }`}
-        >
+        <div className={`mb-4 px-4 py-3 rounded border ${
+          mensajeEliminar.tipo === 'success'
+            ? 'bg-green-100 border-green-400 text-green-700'
+            : 'bg-red-100 border-red-400 text-red-700'
+        }`}>
           {mensajeEliminar.mensaje}
         </div>
       )}
@@ -364,23 +481,17 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
             {usuarios.map((usuario) => (
               <tr key={usuario.id} className="hover:bg-gray-50 transition">
                 <td className="px-4 py-3 text-sm text-gray-600">{usuario.id}</td>
-                <td className="px-4 py-3 text-sm font-semibold text-gray-800">
-                  {usuario.username}
-                </td>
+                <td className="px-4 py-3 text-sm font-semibold text-gray-800">{usuario.username}</td>
                 <td className="px-4 py-3 text-sm text-gray-600">{usuario.email}</td>
-                <td className="px-4 py-3 text-sm text-gray-800">
-                  {usuario.first_name || '-'}
-                </td>
+                <td className="px-4 py-3 text-sm text-gray-800">{usuario.first_name || '-'}</td>
                 <td className="px-4 py-3">
-                  <span
-                    className={`px-3 py-1 rounded text-xs font-semibold ${
-                      usuario.rol_display === 'Administrativo'
-                        ? 'bg-red-100 text-red-800'
-                        : usuario.rol_display === 'Profesor'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-green-100 text-green-800'
-                    }`}
-                  >
+                  <span className={`px-3 py-1 rounded text-xs font-semibold ${
+                    usuario.rol_display === 'Administrativo'
+                      ? 'bg-red-100 text-red-800'
+                      : usuario.rol_display === 'Profesor'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-green-100 text-green-800'
+                  }`}>
                     {usuario.rol_display}
                   </span>
                 </td>
@@ -388,6 +499,12 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
                   {new Date(usuario.created_at).toLocaleDateString('es-ES')}
                 </td>
                 <td className="px-4 py-3">
+                  <button
+                    onClick={() => setUsuarioEditar(usuario)}
+                    className="px-3 py-1 bg-yellow-500 text-white rounded mr-2 hover:bg-yellow-600"
+                  >
+                    Editar
+                  </button>
                   <button
                     onClick={() => handleEliminarUsuario(usuario.id, usuario.first_name || usuario.username)}
                     disabled={eliminando}
@@ -403,9 +520,16 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
       </div>
 
       {usuarios.length === 0 && (
-        <p className="text-center text-gray-500 mt-4">
-          No hay usuarios todavía
-        </p>
+        <p className="text-center text-gray-500 mt-4">No hay usuarios todavía</p>
+      )}
+      
+      {usuarioEditar && (
+        <ModalEditarUsuario
+          usuario={usuarioEditar}
+          loading={editando}
+          onClose={() => setUsuarioEditar(null)}
+          onSave={handleGuardarEdicion}
+        />
       )}
     </div>
   );
@@ -418,10 +542,19 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
 const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
   const [activeTab, setActiveTab] = useState('crear-usuario');
   const [usuarios, setUsuarios] = useState([]);
+  
+  // ⭐ Estados para datos COMBINADOS
   const [datos, setDatos] = useState([]);
+  const [datosCSV, setDatosCSV] = useState([]);
+  const [datosFirebaseArray, setDatosFirebaseArray] = useState([]);
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+
+  // Estado para Firebase tiempo real
+  const [ultimoFirebase, setUltimoFirebase] = useState(null);
+  const [loadingFirebase, setLoadingFirebase] = useState(false);
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -431,11 +564,103 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
     rol: 'estudiante',
   });
 
-  useEffect(() => {
-    fetchUsuarios();
-    fetchDatos();
+  // ========================================================================
+  // FUNCIÓN PARA CALCULAR VIABILIDAD
+  // ========================================================================
+  const calcularViabilidad = (temp, humedad, lluvia) => {
+    return {
+      tomate: (temp >= 24 && temp <= 27 && lluvia >= 3 && lluvia <= 10 && humedad >= 80) ? 'Sí' : 'No',
+      banana: (temp >= 24 && temp <= 28 && lluvia >= 5 && lluvia <= 30) ? 'Sí' : 'No',
+      cacao: (temp >= 23 && temp <= 28 && lluvia < 40) ? 'Sí' : 'No',
+      arroz: (temp >= 24 && temp <= 27 && lluvia >= 3 && lluvia <= 25) ? 'Sí' : 'No',
+      maiz: (temp >= 24 && temp <= 27 && lluvia >= 3 && lluvia <= 15) ? 'Sí' : 'No',
+    };
+  };
+
+  // ========================================================================
+  // ⭐ CARGAR FIREBASE
+  // ========================================================================
+  const fetchFirebase = useCallback(async () => {
+    try {
+      setLoadingFirebase(true);
+      const response = await fetch(FIREBASE_URL);
+      const data = await response.json();
+
+      if (data) {
+        const registros = Object.entries(data).map(([key, value]) => ({
+          id: key,
+          ...value
+        }));
+
+        registros.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+        // Guardar último para tiempo real
+        if (registros[0]) {
+          setUltimoFirebase({
+            temperatura: registros[0].temperatura || 0,
+            humedad: registros[0].humedad || 0,
+            humedad_suelo: registros[0].humedad_suelo || 0,
+            lluvia: registros[0].lluvia < 0 ? 0 : registros[0].lluvia || 0,
+            uvIndex: registros[0].uvIndex || 0,
+            timestamp: registros[0].timestamp || 0,
+            totalRegistros: registros.length
+          });
+        }
+
+        // ⭐ CONVERTIR Firebase al formato del CSV
+        const firebaseComoCSV = registros.map((r) => {
+          const temp = r.temperatura || 0;
+          const humedad = r.humedad || 0;
+          const humedadSuelo = r.humedad_suelo || 0;
+          const lluvia = r.lluvia < 0 ? 0 : r.lluvia || 0;
+          const uvIndex = r.uvIndex || 0;
+          
+          // ⭐ PARSEAR TIMESTAMP - puede ser número o string "YY/MM/DD"
+          let fecha = new Date().toISOString().slice(0, 10);
+          if (r.timestamp) {
+            if (typeof r.timestamp === 'string') {
+              const partes = r.timestamp.split('/');
+              if (partes.length === 3) {
+                const año = partes[0].length === 2 ? '20' + partes[0] : partes[0];
+                fecha = `${año}-${partes[1].padStart(2, '0')}-${partes[2].padStart(2, '0')}`;
+              }
+            } else if (typeof r.timestamp === 'number') {
+              const ts = r.timestamp > 10000000000 ? r.timestamp / 1000 : r.timestamp;
+              fecha = new Date(ts * 1000).toISOString().slice(0, 10);
+            }
+          }
+
+          const radiacion = uvIndex <= 2 ? 4.5 : uvIndex <= 5 ? 4.8 : 5.0;
+          const viabilidad = calcularViabilidad(temp, humedad, lluvia);
+
+          return {
+            date: fecha,
+            temperatura: temp,
+            radiacion_solar: radiacion * 1000,
+            humedad_suelo: humedadSuelo,
+            humedad: humedad,
+            precipitacion: lluvia,
+            tomate: viabilidad.tomate,
+            banana: viabilidad.banana,
+            cacao: viabilidad.cacao,
+            arroz: viabilidad.arroz,
+            maiz: viabilidad.maiz,
+            fuente: 'firebase'
+          };
+        });
+
+        setDatosFirebaseArray(firebaseComoCSV);
+      }
+    } catch (err) {
+      console.error('Error Firebase:', err);
+    } finally {
+      setLoadingFirebase(false);
+    }
   }, []);
 
+  // ========================================================================
+  // CARGAR USUARIOS
+  // ========================================================================
   const fetchUsuarios = async () => {
     try {
       const response = await axios.get(`${apiBaseUrl}/usuarios/`);
@@ -445,7 +670,9 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
     }
   };
 
-  // ✅ CARGAR CSV CON PAPAPARSE
+  // ========================================================================
+  // CARGAR CSV
+  // ========================================================================
   const fetchDatos = async () => {
     try {
       const response = await fetch('/cultivos_viabilidad_FINAL.csv');
@@ -458,7 +685,7 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
           const datosParseados = results.data.map((row) => ({
             date: row.date || '',
             temperatura: parseFloat(row.Temperatura) || 0,
-            radiacion_solar: parseFloat(row.RadiacionsolarpromediokWm2) || 0,
+            radiacion_solar: (parseFloat(row.RadiacionsolarpromediokWm2) || 0) * 1000,
             humedad_suelo: parseFloat(row.HumedadSuelo) || 0,
             humedad: parseFloat(row.Humedadrelativa) || 0,
             precipitacion: parseFloat(row.Pluviometria) || 0,
@@ -467,8 +694,9 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
             cacao: row.Cacao || 'No',
             arroz: row.Arroz || 'No',
             maiz: row.Maiz || 'No',
+            fuente: 'csv'
           }));
-          setDatos(datosParseados);
+          setDatosCSV(datosParseados);
           console.log(`✅ CSV cargado: ${datosParseados.length} registros`);
         },
         error: (error) => {
@@ -479,6 +707,32 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
       console.error('Error cargando CSV:', err);
     }
   };
+
+  // ========================================================================
+  // ⭐ COMBINAR CSV + FIREBASE
+  // ========================================================================
+  useEffect(() => {
+    const fechasCSV = new Set(datosCSV.map(d => d.date));
+    const firebaseNuevos = datosFirebaseArray.filter(d => !fechasCSV.has(d.date));
+    
+    const combinados = [...datosCSV, ...firebaseNuevos];
+    combinados.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    setDatos(combinados);
+    console.log(`📊 Admin: ${datosCSV.length} CSV + ${firebaseNuevos.length} Firebase = ${combinados.length} total`);
+  }, [datosCSV, datosFirebaseArray]);
+
+  // ========================================================================
+  // EFECTOS
+  // ========================================================================
+  useEffect(() => {
+    fetchUsuarios();
+    fetchDatos();
+    fetchFirebase();
+
+    const intervalFirebase = setInterval(fetchFirebase, 30000);
+    return () => clearInterval(intervalFirebase);
+  }, [fetchFirebase]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -533,8 +787,7 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
     }
   };
 
-  const obtenerUltimoRegistro = () => datos.length > 0 ? datos[datos.length - 1] : null;
-  const ultimoRegistro = obtenerUltimoRegistro();
+  const ultimoRegistro = datos.length > 0 ? datos[datos.length - 1] : null;
 
   const calcularStats = () => {
     if (datos.length === 0) return null;
@@ -544,12 +797,11 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
     const average = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
 
     return {
-      temperature: ultimoRegistro?.temperatura || 0,
-      humidity: ultimoRegistro?.humedad || 0,
-      soilMoisture: ultimoRegistro?.humedad_suelo || 0,
+      temperature: ultimoFirebase?.temperatura || ultimoRegistro?.temperatura || 0,
+      humidity: ultimoFirebase?.humedad || ultimoRegistro?.humedad || 0,
+      soilMoisture: ultimoFirebase?.humedad_suelo || ultimoRegistro?.humedad_suelo || 0,
       solarRadiation: ultimoRegistro?.radiacion_solar || 0,
-      precipitation: ultimoRegistro?.precipitacion || 0,
-      windSpeed: 0,
+      precipitation: ultimoFirebase?.lluvia || ultimoRegistro?.precipitacion || 0,
       tempPromedio: average(temps).toFixed(2),
       humedadPromedio: average(humeds).toFixed(2),
       radiacionPromedio: average(radiaciones).toFixed(0),
@@ -558,22 +810,26 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
 
   const stats = calcularStats();
 
-  const mockHistoricalData = datos.slice(-5).map((d) => ({
+  const mockHistoricalData = datos.slice(-30).map((d) => ({
     fecha: d.date,
     temp: d.temperatura,
     hum: d.humedad,
     rad: Math.round(d.radiacion_solar / 100),
     precip: d.precipitacion,
-    viento: 0,
   }));
 
   const obtenerRecomendaciones = () => {
-    if (!ultimoRegistro) return [];
+    const temp = ultimoFirebase?.temperatura || ultimoRegistro?.temperatura || 0;
+    const lluvia = ultimoFirebase?.lluvia || ultimoRegistro?.precipitacion || 0;
+    const humedad = ultimoFirebase?.humedad || ultimoRegistro?.humedad || 0;
+
+    const viabilidad = calcularViabilidad(temp, humedad, lluvia);
+
     return [
-      { cultivo: 'Arroz', viabilidad: ultimoRegistro.arroz === 'Sí' ? 85 : 40, optimo: ultimoRegistro.arroz === 'Sí' },
-      { cultivo: 'Maíz', viabilidad: ultimoRegistro.maiz === 'Sí' ? 78 : 45, optimo: ultimoRegistro.maiz === 'Sí' },
-      { cultivo: 'Cacao', viabilidad: ultimoRegistro.cacao === 'Sí' ? 92 : 30, optimo: ultimoRegistro.cacao === 'Sí' },
-      { cultivo: 'Banana', viabilidad: ultimoRegistro.banana === 'Sí' ? 88 : 35, optimo: ultimoRegistro.banana === 'Sí' },
+      { cultivo: 'Arroz', viabilidad: viabilidad.arroz === 'Sí' ? 85 : 40, optimo: viabilidad.arroz === 'Sí' },
+      { cultivo: 'Maíz', viabilidad: viabilidad.maiz === 'Sí' ? 78 : 45, optimo: viabilidad.maiz === 'Sí' },
+      { cultivo: 'Cacao', viabilidad: viabilidad.cacao === 'Sí' ? 92 : 30, optimo: viabilidad.cacao === 'Sí' },
+      { cultivo: 'Banana', viabilidad: viabilidad.banana === 'Sí' ? 88 : 35, optimo: viabilidad.banana === 'Sí' },
     ];
   };
 
@@ -581,58 +837,47 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
 
   return (
     <div className="space-y-6">
+      {/* HEADER CON BOTONES */}
       <div className="bg-white rounded-xl shadow-lg p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800">🏛️ Panel Administrativo</h2>
+          <div className="flex gap-2">
+            <button
+              onClick={fetchFirebase}
+              disabled={loadingFirebase}
+              className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2"
+            >
+              <Database size={18} className={loadingFirebase ? 'animate-pulse' : ''} />
+              Firebase
+            </button>
+            <button
+              onClick={() => { fetchDatos(); fetchFirebase(); }}
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2"
+            >
+              <RefreshCw size={18} />
+              Refrescar
+            </button>
+          </div>
+        </div>
+
         <div className="flex gap-2 border-b overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('crear-usuario')}
-            className={`px-6 py-2 font-semibold transition whitespace-nowrap ${
-              activeTab === 'crear-usuario'
-                ? 'border-b-4 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            ➕ Crear Usuario
-          </button>
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`px-6 py-2 font-semibold transition whitespace-nowrap ${
-              activeTab === 'dashboard'
-                ? 'border-b-4 border-green-600 text-green-600'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            📊 Dashboard Estudiante
-          </button>
-          <button
-            onClick={() => setActiveTab('analisis')}
-            className={`px-6 py-2 font-semibold transition whitespace-nowrap ${
-              activeTab === 'analisis'
-                ? 'border-b-4 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            📈 Análisis Profesor
-          </button>
-          <button
-            onClick={() => setActiveTab('analisis-kmeans')}
-            className={`px-6 py-2 font-semibold transition whitespace-nowrap ${
-              activeTab === 'analisis-kmeans'
-                ? 'border-b-4 border-purple-600 text-purple-600'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            📚 Análisis K-Means
-          </button>
-          <button
-            onClick={() => setActiveTab('usuarios')}
-            className={`px-6 py-2 font-semibold transition whitespace-nowrap ${
-              activeTab === 'usuarios'
-                ? 'border-b-4 border-orange-600 text-orange-600'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            👥 Usuarios
-          </button>
+          {['crear-usuario', 'dashboard', 'analisis', 'analisis-kmeans', 'usuarios'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-6 py-2 font-semibold transition whitespace-nowrap ${
+                activeTab === tab
+                  ? 'border-b-4 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              {tab === 'crear-usuario' && '➕ Crear Usuario'}
+              {tab === 'dashboard' && '📊 Dashboard'}
+              {tab === 'analisis' && '📈 Análisis'}
+              {tab === 'analisis-kmeans' && '📚 K-Means'}
+              {tab === 'usuarios' && '👥 Usuarios'}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -646,14 +891,19 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
           success={success}
         />
       )}
+      
       {activeTab === 'dashboard' && (
         <DashboardEstudiante 
           ultimoRegistro={ultimoRegistro}
           stats={stats}
           datos={datos}
           mockCropRecommendations={mockCropRecommendations}
+          ultimoFirebase={ultimoFirebase}
+          datosCSV={datosCSV}
+          datosFirebaseArray={datosFirebaseArray}
         />
       )}
+      
       {activeTab === 'analisis' && (
         <DashboardProfesor 
           mockHistoricalData={mockHistoricalData}
@@ -661,17 +911,18 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
           mockCropRecommendations={mockCropRecommendations}
           ultimoRegistro={ultimoRegistro}
           datos={datos}
+          ultimoFirebase={ultimoFirebase}
         />
       )}
+      
       {activeTab === 'analisis-kmeans' && (
-        <div className="space-y-6">
-          <AnalisisKMeans 
-            variante="profesor"
-            imagenClusters="/centroides.png"
-            imagenCodo="/codo.png"
-          />
-        </div>
+        <AnalisisKMeans 
+          variante="profesor"
+          imagenClusters="/centroides.png"
+          imagenCodo="/codo.png"
+        />
       )}
+      
       {activeTab === 'usuarios' && (
         <GestionUsuarios 
           usuarios={usuarios}
