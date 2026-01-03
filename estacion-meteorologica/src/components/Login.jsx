@@ -29,9 +29,13 @@ const Login = ({ onLogin, error }) => {
       <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
         {/* HEADER */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-green-700">🌾</h1>
+          <img 
+            src="/logo.jpg" 
+            alt="UAE Logo" 
+            className="h-20 w-20 rounded-full object-cover mx-auto"
+          />
           <h2 className="text-2xl font-bold text-gray-800 mt-2">Estación Meteorológica</h2>
-          <p className="text-gray-600 mt-2">Campus Milagro </p>
+          <p className="text-gray-600 mt-2">Campus Milagro</p>
         </div>
 
         {/* FORMULARIO */}
@@ -85,12 +89,7 @@ const Login = ({ onLogin, error }) => {
           </button>
         </form>
 
-         {/* CREDENCIALES DE PRUEBA 
-        <div className="mt-6 p-4 bg-green-50 rounded-lg text-sm text-gray-600 border border-green-200">
-          <p className="font-semibold mb-2 text-green-700">🔐 Credenciales de prueba:</p>
-          <p>Usuario: <code className="bg-gray-200 px-2 py-1 rounded text-xs font-mono">admin</code></p>
-          <p>Contraseña: <code className="bg-gray-200 px-2 py-1 rounded text-xs font-mono">1234</code></p>
-        </div> */}
+
 
         {/* FOOTER */}
         <div className="mt-6 text-center text-xs text-gray-500">
