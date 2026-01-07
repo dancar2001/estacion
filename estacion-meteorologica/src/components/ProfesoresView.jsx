@@ -101,13 +101,24 @@ const ProfesoresView = ({ user, apiBaseUrl, onLogout }) => {
             }
           }
 
-          const radiacion = uvIndex <= 2 ? 4.5 : uvIndex <= 5 ? 4.8 : 5.0;
+         let radiacion = 0;
+
+if (uvIndex === 0) {
+  radiacion = 0;
+} else if (uvIndex <= 2) {
+  radiacion = 4.5;
+} else if (uvIndex <= 5) {
+  radiacion = 4.8;
+} else {
+  radiacion = 5.0;
+}
+
           const viabilidad = calcularViabilidad(temp, humedad, lluvia);
 
           return {
             date: fecha,
             temperatura: temp,
-            radiacion_solar: radiacion * 1000,
+            radiacion_solar: radiacion ,
             humedad_suelo: humedadSuelo,
             humedad: humedad,
             precipitacion: lluvia,
@@ -147,7 +158,7 @@ const ProfesoresView = ({ user, apiBaseUrl, onLogout }) => {
           const datosParseados = results.data.map((row) => ({
             date: row.date || '',
             temperatura: parseFloat(row.Temperatura) || 0,
-            radiacion_solar: (parseFloat(row.RadiacionsolarpromediokWm2) || 0) * 1000,
+            radiacion_solar: (parseFloat(row.RadiacionsolarpromediokWm2) || 0),
             humedad_suelo: parseFloat(row.HumedadSuelo) || 0,
             humedad: parseFloat(row.Humedadrelativa) || 0,
             precipitacion: parseFloat(row.Pluviometria) || 0,
@@ -230,7 +241,7 @@ const ProfesoresView = ({ user, apiBaseUrl, onLogout }) => {
     fecha: d.date,
     temp: d.temperatura,
     hum: d.humedad,
-    rad: Math.round(d.radiacion_solar / 10),
+    rad: d.radiacion_solar,
     precip: d.precipitacion,
   }));
 
@@ -646,7 +657,7 @@ const ProfesoresView = ({ user, apiBaseUrl, onLogout }) => {
                       <td className="px-4 py-3">{d.date}</td>
                       <td className="px-4 py-3 text-red-600 font-semibold">{d.temperatura}°C</td>
                       <td className="px-4 py-3 text-blue-600">{d.humedad}%</td>
-                      <td className="px-4 py-3 text-yellow-600">{Math.round(d.radiacion_solar)} W/m²</td>
+                      <td className="px-4 py-3 text-yellow-600">{d.radiacion_solar.toFixed(1)} kW/m²</td>
                       <td className="px-4 py-3 text-cyan-600">{d.precipitacion} mm</td>
                       <td className="px-4 py-3 text-lg">{viables || '❌'}</td>
                       <td className="px-4 py-3">
