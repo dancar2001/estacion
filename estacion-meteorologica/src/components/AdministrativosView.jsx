@@ -302,23 +302,7 @@ const DashboardProfesor = ({ mockHistoricalData, stats, ultimoRegistro, datos, u
       )}
 
       {stats && (
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">🎯 Viabilidad por Cultivo</h3>
-            <ResponsiveContainer width="100%" height={300}>
-             <RadarChart data={prediccionesML.map(p => ({
-  cultivo: p.nombre,
-  viabilidad: p.viabilidad
-}))}>
-
-                <PolarGrid />
-                <PolarAngleAxis dataKey="cultivo" />
-                <PolarRadiusAxis angle={90} domain={[0, 100]} />
-                <Radar name="Viabilidad %" dataKey="viabilidad" stroke="#10b981" fill="#10b981" fillOpacity={0.6} />
-                <Tooltip />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="grid md:grid-cols-1 gap-6">
 
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">📊 Estadísticas</h3>
