@@ -222,7 +222,7 @@ const DashboardEstudiante = ({
       </div>
     )}
 
- 
+
     <div className="bg-white rounded-xl shadow-lg p-6">
       <h3 className="text-xl font-bold text-gray-800 mb-4">🌾 Recomendaciones de Cultivo</h3>
       <div className="grid md:grid-cols-2 gap-4">
@@ -526,7 +526,6 @@ const handlePrediccionesActualizadas = useCallback((predicciones) => {
       return b.viabilidad - a.viabilidad;
     });
 
-
     setPrediccionesML(formateadas);
   }
 }, []);
@@ -569,46 +568,20 @@ const handlePrediccionesActualizadas = useCallback((predicciones) => {
           ...value
         }));
 
-// Convertir todos los timestamp a numero real
-const registrosNormalizados = registros.map(r => {
-  let ts = 0;
+        registros.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-  if (typeof r.timestamp === 'number') {
-    ts = r.timestamp > 10000000000 ? r.timestamp : r.timestamp * 1000;
-  } else if (typeof r.timestamp === 'string') {
-    const d = new Date(r.timestamp);
-    if (!isNaN(d)) ts = d.getTime();
-  }
-
-  return {
-    ...r,
-    __ts: ts
-  };
-});
-
-// Ordenar por timestamp real
-registrosNormalizados.sort((a, b) => b.__ts - a.__ts);
-
-const registrosObj = data;
-
-// Obtener última key insertada (Firebase las ordena por tiempo)
-const keys = Object.keys(registrosObj);
-
-if (keys.length > 0) {
-  const lastKey = keys[keys.length - 1];
-  const ultimo = registrosObj[lastKey];
-
-  setUltimoFirebase({
-    temperatura: ultimo.temperatura || 0,
-    humedad: ultimo.humedad || 0,
-    humedad_suelo: ultimo.humedad_suelo || 0,
-    lluvia: ultimo.lluvia < 0 ? 0 : ultimo.lluvia || 0,
-    uvIndex: ultimo.uvIndex || 0,
-    timestamp: ultimo.timestamp || '',
-    totalRegistros: keys.length
-  });
-}
-
+        // Guardar último para tiempo real
+        if (registros[0]) {
+          setUltimoFirebase({
+            temperatura: registros[0].temperatura || 0,
+            humedad: registros[0].humedad || 0,
+            humedad_suelo: registros[0].humedad_suelo || 0,
+            lluvia: registros[0].lluvia < 0 ? 0 : registros[0].lluvia || 0,
+            uvIndex: registros[0].uvIndex || 0,
+            timestamp: registros[0].timestamp || 0,
+            totalRegistros: registros.length
+          });
+        }
 
         // ⭐ CONVERTIR Firebase al formato del CSV
         const firebaseComoCSV = registros.map((r) => {
@@ -722,7 +695,6 @@ if (keys.length > 0) {
     combinados.sort((a, b) => new Date(a.date) - new Date(b.date));
     
     setDatos(combinados);
-
   }, [datosCSV, datosFirebaseArray]);
 
   // ========================================================================
