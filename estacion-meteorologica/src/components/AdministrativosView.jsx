@@ -578,7 +578,6 @@ const handlePrediccionesActualizadas = useCallback((predicciones) => {
           ...value
         }));
 
-
 const registrosObj = data;
 
 // Obtener última key insertada (Firebase las ordena por tiempo)
@@ -598,6 +597,7 @@ if (keys.length > 0) {
     totalRegistros: keys.length
   });
 }
+
 
         // ⭐ CONVERTIR Firebase al formato del CSV
         const firebaseComoCSV = registros.map((r) => {
