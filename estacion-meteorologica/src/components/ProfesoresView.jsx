@@ -689,16 +689,16 @@ if (keys.length > 0) {
         </div>
       )}
 
-      {/* TAB: PREDICTOR */}
-      {activeTab === 'predictor' && (
-        <PredictorCultivos
-          temperatura={ultimoFirebase?.temperatura || datos[datos.length - 1]?.temperatura || 0}
-          radiacion={ultimoFirebase ? (ultimoFirebase.uvIndex <= 2 ? 4.5 : ultimoFirebase.uvIndex <= 5 ? 4.8 : 5.0) : (datos[datos.length - 1]?.radiacion_solar / 1000 || 0)}
-          humedadSuelo={ultimoFirebase?.humedad_suelo || datos[datos.length - 1]?.humedad_suelo || 0}
-          humedadRelativa={ultimoFirebase?.humedad || datos[datos.length - 1]?.humedad || 0}
-          pluviometria={ultimoFirebase?.lluvia || datos[datos.length - 1]?.precipitacion || 0}
-        />
-      )}
+{/* TAB: PREDICTOR */}
+{activeTab === 'predictor' && (
+  <PredictorCultivos
+    temperatura={ultimoFirebase?.temperatura || datos[datos.length - 1]?.temperatura || 0}
+    radiacion={ultimoFirebase ? (ultimoFirebase.uvIndex / 10) : (datos[datos.length - 1]?.radiacion_solar || 0)}
+    humedadSuelo={ultimoFirebase?.humedad_suelo || datos[datos.length - 1]?.humedad_suelo || 0}
+    humedadRelativa={ultimoFirebase?.humedad || datos[datos.length - 1]?.humedad || 0}
+    pluviometria={ultimoFirebase ? (ultimoFirebase.lluvia / 10) : (datos[datos.length - 1]?.precipitacion || 0)}
+  />
+)}
 
       {/* TAB: VIABILIDAD */}
       {activeTab === 'viabilidad' && (
