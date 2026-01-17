@@ -90,6 +90,7 @@ const ModalEditarUsuario = ({ usuario, onClose, onSave, loading }) => {
   );
 };
 
+
 // ============================================================================
 // COMPONENTES EXTRAÍDOS
 // ============================================================================
@@ -177,8 +178,11 @@ const CrearUsuarioTab = ({ formData, handleInputChange, handleSubmit, loading, e
     </form>
   </div>
 );
+const DashboardEstudiante = ({ 
+  ultimoRegistro, stats, datos, mockCropRecommendations, ultimoFirebase, datosCSV, datosFirebaseArray,
+  prediccionesML, onPredicciones
+}) => (
 
-const DashboardEstudiante = ({ ultimoRegistro, stats, datos, mockCropRecommendations, ultimoFirebase, datosCSV, datosFirebaseArray }) => (
   <div className="space-y-6">
     {/* ⭐ FIREBASE TIEMPO REAL */}
     {ultimoFirebase && (
@@ -218,112 +222,48 @@ const DashboardEstudiante = ({ ultimoRegistro, stats, datos, mockCropRecommendat
       </div>
     )}
 
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-        <TrendingUp className="text-green-600" size={28} />
-        📊 Variables Meteorológicas
-      </h2>
-      
-      {/* Info de datos */}
-      <div className="flex flex-wrap items-center gap-4 text-sm mb-6">
-        <span className="text-gray-500">📁 {datosCSV?.length || 0} CSV</span>
-        <span className="text-gray-500">🔥 {datosFirebaseArray?.length || 0} Firebase</span>
-        <span className="text-purple-600 font-bold">📊 {datos.length} TOTAL</span>
-      </div>
-
-      {stats && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-lg border border-red-200">
-            <div className="flex items-center justify-between mb-2">
-              <Thermometer className="text-red-600" size={32} />
-              <span className="text-sm font-medium text-red-700">Temperatura</span>
-            </div>
-            <p className="text-4xl font-bold text-red-700">{stats.temperature}°C</p>
-            <p className="text-xs text-red-600 mt-2">Rango óptimo: 22-30°C</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200">
-            <div className="flex items-center justify-between mb-2">
-              <Droplets className="text-blue-600" size={32} />
-              <span className="text-sm font-medium text-blue-700">Humedad Relativa</span>
-            </div>
-            <p className="text-4xl font-bold text-blue-700">{stats.humidity}%</p>
-            <p className="text-xs text-blue-600 mt-2">Rango óptimo: 70-85%</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-lg border border-yellow-200">
-            <div className="flex items-center justify-between mb-2">
-              <Sun className="text-yellow-600" size={32} />
-              <span className="text-sm font-medium text-yellow-700">Radiación Solar</span>
-            </div>
-            <p className="text-4xl font-bold text-yellow-700">{Math.round(stats.solarRadiation)}</p>
-            <p className="text-xs text-yellow-600 mt-2">W/m²</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg border border-green-200">
-            <div className="flex items-center justify-between mb-2">
-              <Activity className="text-green-600" size={32} />
-              <span className="text-sm font-medium text-green-700">Humedad del Suelo</span>
-            </div>
-            <p className="text-4xl font-bold text-green-700">{stats.soilMoisture}%</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 p-6 rounded-lg border border-cyan-200">
-            <div className="flex items-center justify-between mb-2">
-              <CloudRain className="text-cyan-600" size={32} />
-              <span className="text-sm font-medium text-cyan-700">Precipitación</span>
-            </div>
-            <p className="text-4xl font-bold text-cyan-700">{stats.precipitation}</p>
-            <p className="text-xs text-cyan-600 mt-2">mm</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-lg border border-purple-200">
-            <div className="flex items-center justify-between mb-2">
-              <BarChart3 className="text-purple-600" size={32} />
-              <span className="text-sm font-medium text-purple-700">Total Registros</span>
-            </div>
-            <p className="text-4xl font-bold text-purple-700">{datos.length}</p>
-            <p className="text-xs text-purple-600 mt-2">CSV + Firebase</p>
-          </div>
-        </div>
-      )}
-    </div>
-
+ 
     <div className="bg-white rounded-xl shadow-lg p-6">
       <h3 className="text-xl font-bold text-gray-800 mb-4">🌾 Recomendaciones de Cultivo</h3>
       <div className="grid md:grid-cols-2 gap-4">
-        {mockCropRecommendations.map((crop, idx) => (
-          <div
-            key={idx}
-            className={`p-4 rounded-lg border-2 ${
-              crop.optimo ? 'bg-green-50 border-green-300' : 'bg-yellow-50 border-yellow-300'
-            }`}
-          >
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="font-bold text-gray-800">{crop.cultivo}</h4>
-              {crop.optimo && (
-                <span className="text-green-600 text-sm font-semibold">✓ ÓPTIMO</span>
-              )}
-            </div>
-            <div className="mb-2">
-              <div className="bg-gray-200 rounded-full h-3">
-                <div
-                  className={`h-3 rounded-full ${
-                    crop.optimo ? 'bg-green-600' : 'bg-yellow-500'
-                  }`}
-                  style={{ width: `${crop.viabilidad}%` }}
-                />
-              </div>
-            </div>
-            <p className="text-sm text-gray-600">Viabilidad: {crop.viabilidad}%</p>
-          </div>
-        ))}
+        {
+prediccionesML.map((crop, idx) => (
+  <div
+    key={idx}
+    className={`p-4 rounded-lg border-2 ${
+      crop.esViable ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'
+    }`}
+  >
+    <div className="flex justify-between items-center mb-2">
+      <h4 className="font-bold text-gray-800">{crop.nombre}</h4>
+      {crop.esViable && (
+        <span className="text-green-600 text-sm font-semibold">✓ ÓPTIMO</span>
+      )}
+    </div>
+
+    <div className="mb-2">
+      <div className="bg-gray-200 rounded-full h-3">
+        <div
+          className={`h-3 rounded-full ${crop.esViable ? 'bg-green-600' : 'bg-red-500'}`}
+          style={{ width: `${crop.viabilidad}%` }}
+        />
+      </div>
+    </div>
+
+    <p className="text-sm text-gray-600">Confianza: {crop.viabilidad}%</p>
+  </div>
+))
+
+        
+        
+        }
       </div>
     </div>
   </div>
 );
+const DashboardProfesor = ({ mockHistoricalData, stats, ultimoRegistro, datos, ultimoFirebase, onPredicciones, prediccionesML }) => (
 
-const DashboardProfesor = ({ mockHistoricalData, stats, mockCropRecommendations, ultimoRegistro, datos, ultimoFirebase }) => (
+
   <div className="space-y-6">
     <div className="bg-white rounded-xl shadow-lg p-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
@@ -356,7 +296,11 @@ const DashboardProfesor = ({ mockHistoricalData, stats, mockCropRecommendations,
           <div>
             <h3 className="text-lg font-semibold text-gray-700 mb-4">🎯 Viabilidad por Cultivo</h3>
             <ResponsiveContainer width="100%" height={300}>
-              <RadarChart data={mockCropRecommendations}>
+             <RadarChart data={prediccionesML.map(p => ({
+  cultivo: p.nombre,
+  viabilidad: p.viabilidad
+}))}>
+
                 <PolarGrid />
                 <PolarAngleAxis dataKey="cultivo" />
                 <PolarRadiusAxis angle={90} domain={[0, 100]} />
@@ -393,15 +337,17 @@ const DashboardProfesor = ({ mockHistoricalData, stats, mockCropRecommendations,
       )}
     </div>
 
-    {(ultimoFirebase || ultimoRegistro) && (
-      <PredictorCultivos
-        temperatura={ultimoFirebase?.temperatura || ultimoRegistro?.temperatura || 0}
-        radiacion={ultimoFirebase ? (ultimoFirebase.uvIndex <= 2 ? 4.5 : ultimoFirebase.uvIndex <= 5 ? 4.8 : 5.0) : (ultimoRegistro?.radiacion_solar / 1000 || 0)}
-        humedadSuelo={ultimoFirebase?.humedad_suelo || ultimoRegistro?.humedad_suelo || 0}
-        humedadRelativa={ultimoFirebase?.humedad || ultimoRegistro?.humedad || 0}
-        pluviometria={ultimoFirebase?.lluvia || ultimoRegistro?.precipitacion || 0}
-      />
-    )}
+{(ultimoFirebase || ultimoRegistro) && (
+  <PredictorCultivos
+    temperatura={ultimoFirebase?.temperatura || ultimoRegistro?.temperatura || 0}
+    radiacion={ultimoFirebase ? (ultimoFirebase.uvIndex / 10) : (ultimoRegistro?.radiacion_solar || 0)}
+    humedadSuelo={ultimoFirebase?.humedad_suelo || ultimoRegistro?.humedad_suelo || 0}
+    humedadRelativa={ultimoFirebase?.humedad || ultimoRegistro?.humedad || 0}
+    pluviometria={ultimoFirebase ? (ultimoFirebase.lluvia / 10) : (ultimoRegistro?.precipitacion || 0)}
+    onPrediccionesChange={onPredicciones}
+  />
+)}
+
   </div>
 );
 
@@ -540,6 +486,8 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
 // ============================================================================
 
 const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
+  const [prediccionesML, setPrediccionesML] = useState([]);
+
   const [activeTab, setActiveTab] = useState('crear-usuario');
   const [usuarios, setUsuarios] = useState([]);
   
@@ -564,16 +512,45 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
     rol: 'estudiante',
   });
 
+const handlePrediccionesActualizadas = useCallback((predicciones) => {
+  if (predicciones && predicciones.length > 0) {
+
+    const formateadas = predicciones.map(pred => ({
+      nombre: pred.cultivo,
+      viabilidad: pred.confianza,
+      esViable: pred.viabilidad || pred.es_optimo_en_cluster,
+      esOptimoEnCluster: Boolean(pred.es_optimo_en_cluster)
+    }))
+    .sort((a, b) => {
+      if (a.esViable !== b.esViable) return a.esViable ? -1 : 1;
+      return b.viabilidad - a.viabilidad;
+    });
+
+
+    setPrediccionesML(formateadas);
+  }
+}, []);
+
+
   // ========================================================================
   // FUNCIÓN PARA CALCULAR VIABILIDAD
   // ========================================================================
   const calcularViabilidad = (temp, humedad, lluvia) => {
     return {
-      tomate: (temp >= 24 && temp <= 27 && lluvia >= 3 && lluvia <= 10 && humedad >= 80) ? 'Sí' : 'No',
-      banana: (temp >= 24 && temp <= 28 && lluvia >= 5 && lluvia <= 30) ? 'Sí' : 'No',
-      cacao: (temp >= 23 && temp <= 28 && lluvia < 40) ? 'Sí' : 'No',
-      arroz: (temp >= 24 && temp <= 27 && lluvia >= 3 && lluvia <= 25) ? 'Sí' : 'No',
-      maiz: (temp >= 24 && temp <= 27 && lluvia >= 3 && lluvia <= 15) ? 'Sí' : 'No',
+      // Tomate: 20-32°C, humedad 50-85%, lluvia moderada
+      tomate: (temp >= 20 && temp <= 32 && lluvia >= 1 && lluvia <= 15 && humedad >= 50 && humedad <= 85) ? 'Sí' : 'No',
+      
+      // Banana: 20-32°C, lluvia moderada-alta
+      banana: (temp >= 20 && temp <= 32 && lluvia >= 2 && lluvia <= 35) ? 'Sí' : 'No',
+      
+      // Cacao: 21-32°C, lluvia < 45mm (muy tolerante)
+      cacao: (temp >= 21 && temp <= 32 && lluvia < 45) ? 'Sí' : 'No',
+      
+      // Arroz: 22-32°C, necesita más agua
+      arroz: (temp >= 22 && temp <= 32 && lluvia >= 2 && lluvia <= 30) ? 'Sí' : 'No',
+      
+      // Maíz: 20-32°C, lluvia moderada
+      maiz: (temp >= 20 && temp <= 32 && lluvia >= 1 && lluvia <= 20) ? 'Sí' : 'No',
     };
   };
 
@@ -592,20 +569,46 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
           ...value
         }));
 
-        registros.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+// Convertir todos los timestamp a numero real
+const registrosNormalizados = registros.map(r => {
+  let ts = 0;
 
-        // Guardar último para tiempo real
-        if (registros[0]) {
-          setUltimoFirebase({
-            temperatura: registros[0].temperatura || 0,
-            humedad: registros[0].humedad || 0,
-            humedad_suelo: registros[0].humedad_suelo || 0,
-            lluvia: registros[0].lluvia < 0 ? 0 : registros[0].lluvia || 0,
-            uvIndex: registros[0].uvIndex || 0,
-            timestamp: registros[0].timestamp || 0,
-            totalRegistros: registros.length
-          });
-        }
+  if (typeof r.timestamp === 'number') {
+    ts = r.timestamp > 10000000000 ? r.timestamp : r.timestamp * 1000;
+  } else if (typeof r.timestamp === 'string') {
+    const d = new Date(r.timestamp);
+    if (!isNaN(d)) ts = d.getTime();
+  }
+
+  return {
+    ...r,
+    __ts: ts
+  };
+});
+
+// Ordenar por timestamp real
+registrosNormalizados.sort((a, b) => b.__ts - a.__ts);
+
+const registrosObj = data;
+
+// Obtener última key insertada (Firebase las ordena por tiempo)
+const keys = Object.keys(registrosObj);
+
+if (keys.length > 0) {
+  const lastKey = keys[keys.length - 1];
+  const ultimo = registrosObj[lastKey];
+
+  setUltimoFirebase({
+    temperatura: ultimo.temperatura || 0,
+    humedad: ultimo.humedad || 0,
+    humedad_suelo: ultimo.humedad_suelo || 0,
+    lluvia: ultimo.lluvia < 0 ? 0 : ultimo.lluvia || 0,
+    uvIndex: ultimo.uvIndex || 0,
+    timestamp: ultimo.timestamp || '',
+    totalRegistros: keys.length
+  });
+}
+
 
         // ⭐ CONVERTIR Firebase al formato del CSV
         const firebaseComoCSV = registros.map((r) => {
@@ -630,24 +633,13 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
             }
           }
 
-                   let radiacion = 0;
 
-if (uvIndex === 0) {
-  radiacion = 0;
-} else if (uvIndex <= 2) {
-  radiacion = 4.5;
-} else if (uvIndex <= 5) {
-  radiacion = 4.8;
-} else {
-  radiacion = 5.0;
-}
-
-          const viabilidad = calcularViabilidad(temp, humedad, lluvia);
+          const viabilidad = calcularViabilidad(temp, humedad, lluvia/10);
 
           return {
             date: fecha,
             temperatura: temp,
-            radiacion_solar: radiacion ,
+            radiacion_solar:uvIndex,
             humedad_suelo: humedadSuelo,
             humedad: humedad,
             precipitacion: lluvia,
@@ -708,7 +700,7 @@ if (uvIndex === 0) {
             fuente: 'csv'
           }));
           setDatosCSV(datosParseados);
-          console.log(`✅ CSV cargado: ${datosParseados.length} registros`);
+
         },
         error: (error) => {
           console.error('❌ Error parsing CSV:', error);
@@ -730,7 +722,7 @@ if (uvIndex === 0) {
     combinados.sort((a, b) => new Date(a.date) - new Date(b.date));
     
     setDatos(combinados);
-    console.log(`📊 Admin: ${datosCSV.length} CSV + ${firebaseNuevos.length} Firebase = ${combinados.length} total`);
+
   }, [datosCSV, datosFirebaseArray]);
 
   // ========================================================================
@@ -903,18 +895,20 @@ if (uvIndex === 0) {
         />
       )}
       
-      {activeTab === 'dashboard' && (
-        <DashboardEstudiante 
-          ultimoRegistro={ultimoRegistro}
-          stats={stats}
-          datos={datos}
-          mockCropRecommendations={mockCropRecommendations}
-          ultimoFirebase={ultimoFirebase}
-          datosCSV={datosCSV}
-          datosFirebaseArray={datosFirebaseArray}
-        />
-      )}
-      
+{activeTab === 'dashboard' && (
+  <DashboardEstudiante 
+    ultimoRegistro={ultimoRegistro}
+    stats={stats}
+    datos={datos}
+    mockCropRecommendations={mockCropRecommendations}
+    ultimoFirebase={ultimoFirebase}
+    datosCSV={datosCSV}
+    datosFirebaseArray={datosFirebaseArray}
+    prediccionesML={prediccionesML}
+    onPredicciones={handlePrediccionesActualizadas}
+  />
+)}
+
       {activeTab === 'analisis' && (
         <DashboardProfesor 
           mockHistoricalData={mockHistoricalData}
@@ -923,6 +917,8 @@ if (uvIndex === 0) {
           ultimoRegistro={ultimoRegistro}
           datos={datos}
           ultimoFirebase={ultimoFirebase}
+          onPredicciones={handlePrediccionesActualizadas}
+          prediccionesML={prediccionesML}
         />
       )}
       
@@ -931,6 +927,8 @@ if (uvIndex === 0) {
           variante="profesor"
           imagenClusters="/centroides.png"
           imagenCodo="/codo.png"
+            ultimoFirebase={ultimoFirebase}
+  ultimoRegistro={ultimoRegistro}
         />
       )}
       
