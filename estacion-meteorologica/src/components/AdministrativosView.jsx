@@ -673,7 +673,7 @@ const handlePrediccionesActualizadas = useCallback((predicciones) => {
             fuente: 'csv'
           }));
           setDatosCSV(datosParseados);
-
+          console.log(`✅ CSV cargado: ${datosParseados.length} registros`);
         },
         error: (error) => {
           console.error('❌ Error parsing CSV:', error);
@@ -695,6 +695,7 @@ const handlePrediccionesActualizadas = useCallback((predicciones) => {
     combinados.sort((a, b) => new Date(a.date) - new Date(b.date));
     
     setDatos(combinados);
+    console.log(`📊 Admin: ${datosCSV.length} CSV + ${firebaseNuevos.length} Firebase = ${combinados.length} total`);
   }, [datosCSV, datosFirebaseArray]);
 
   // ========================================================================
