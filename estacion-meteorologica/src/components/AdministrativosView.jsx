@@ -221,6 +221,16 @@ const DashboardEstudiante = ({
         </div>
       </div>
     )}
+{(ultimoFirebase || ultimoRegistro) && (
+  <PredictorCultivos
+    temperatura={ultimoFirebase?.temperatura || ultimoRegistro?.temperatura || 0}
+    radiacion={ultimoFirebase ? (ultimoFirebase.uvIndex / 10) : (ultimoRegistro?.radiacion_solar || 0)}
+    humedadSuelo={ultimoFirebase?.humedad_suelo || ultimoRegistro?.humedad_suelo || 0}
+    humedadRelativa={ultimoFirebase?.humedad || ultimoRegistro?.humedad || 0}
+    pluviometria={ultimoFirebase ? (ultimoFirebase.lluvia / 10) : (ultimoRegistro?.precipitacion || 0)}
+    onPrediccionesChange={onPredicciones}
+  />
+)}
 
 
     <div className="bg-white rounded-xl shadow-lg p-6">
@@ -673,7 +683,7 @@ const handlePrediccionesActualizadas = useCallback((predicciones) => {
             fuente: 'csv'
           }));
           setDatosCSV(datosParseados);
-          console.log(`✅ CSV cargado: ${datosParseados.length} registros`);
+
         },
         error: (error) => {
           console.error('❌ Error parsing CSV:', error);
@@ -695,7 +705,6 @@ const handlePrediccionesActualizadas = useCallback((predicciones) => {
     combinados.sort((a, b) => new Date(a.date) - new Date(b.date));
     
     setDatos(combinados);
-    console.log(`📊 Admin: ${datosCSV.length} CSV + ${firebaseNuevos.length} Firebase = ${combinados.length} total`);
   }, [datosCSV, datosFirebaseArray]);
 
   // ========================================================================
