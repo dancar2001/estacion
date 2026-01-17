@@ -270,14 +270,15 @@ if (keys.length > 0) {
 
   const cultivosViables = contarCultivosViables();
 
-  const datosporFuente = [
-    { name: 'Cacao', value: cultivosViables.cacao },
-    { name: 'Arroz', value: cultivosViables.arroz },
-    { name: 'Banana', value: cultivosViables.banana },
-    { name: 'Maíz', value: cultivosViables.maiz },
-  ];
+const datosporFuente = [
+  { name: 'Tomate', value: cultivosViables.tomate },
+  { name: 'Banana', value: cultivosViables.banana },
+  { name: 'Cacao', value: cultivosViables.cacao },
+  { name: 'Arroz', value: cultivosViables.arroz },
+  { name: 'Maíz', value: cultivosViables.maiz },
+];
 
-  const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
+const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
 
   // ========================================================================
   // ⭐ DATOS PARA DASHBOARD RESUMEN
@@ -585,19 +586,8 @@ if (keys.length > 0) {
             </ResponsiveContainer>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">🎯 Viabilidad</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <RadarChart data={mockCropRecommendations}>
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="cultivo" />
-                  <PolarRadiusAxis angle={90} domain={[0, 100]} />
-                  <Radar name="%" dataKey="viabilidad" stroke="#10b981" fill="#10b981" fillOpacity={0.6} />
-                  <Tooltip />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="grid md:grid-cols-1 gap-6">
+            
 
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">📊 Cultivos Viables</h3>
