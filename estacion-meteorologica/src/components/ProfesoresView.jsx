@@ -34,15 +34,24 @@ const ProfesoresView = ({ user, apiBaseUrl, onLogout }) => {
   // ========================================================================
   // FUNCIÓN PARA CALCULAR VIABILIDAD
   // ========================================================================
-  const calcularViabilidad = (temp, humedad, lluvia) => {
-    return {
-      tomate: (temp >= 24 && temp <= 27 && lluvia >= 3 && lluvia <= 10 && humedad >= 80) ? 'Sí' : 'No',
-      banana: (temp >= 24 && temp <= 28 && lluvia >= 5 && lluvia <= 30) ? 'Sí' : 'No',
-      cacao: (temp >= 23 && temp <= 28 && lluvia < 40) ? 'Sí' : 'No',
-      arroz: (temp >= 24 && temp <= 27 && lluvia >= 3 && lluvia <= 25) ? 'Sí' : 'No',
-      maiz: (temp >= 24 && temp <= 27 && lluvia >= 3 && lluvia <= 15) ? 'Sí' : 'No',
-    };
+const calcularViabilidad = (temp, humedad, lluvia) => {
+  return {
+    // Tomate: 20-32°C, humedad 50-80%, lluvia moderada
+    tomate: (temp >= 20 && temp <= 32 && lluvia >= 1 && lluvia <= 15 && humedad >= 50 && humedad <= 85) ? 'Sí' : 'No',
+    
+    // Banana: 20-32°C, lluvia moderada-alta
+    banana: (temp >= 20 && temp <= 32 && lluvia >= 2 && lluvia <= 35) ? 'Sí' : 'No',
+    
+    // Cacao: 21-32°C, lluvia < 45mm (muy tolerante)
+    cacao: (temp >= 21 && temp <= 32 && lluvia < 45) ? 'Sí' : 'No',
+    
+    // Arroz: 22-32°C, necesita más agua
+    arroz: (temp >= 22 && temp <= 32 && lluvia >= 2 && lluvia <= 30) ? 'Sí' : 'No',
+    
+    // Maíz: 20-32°C, lluvia moderada
+    maiz: (temp >= 20 && temp <= 32 && lluvia >= 1 && lluvia <= 20) ? 'Sí' : 'No',
   };
+};
 
   // ========================================================================
   // ⭐ CARGAR DATOS DE FIREBASE Y CONVERTIR A FORMATO CSV
@@ -61,21 +70,26 @@ const ProfesoresView = ({ user, apiBaseUrl, onLogout }) => {
           ...value
         }));
 
-        registros.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-        const ultimo = registros[0];
+const registrosObj = data;
 
-        // Guardar último para tiempo real
-        if (ultimo) {
-          setUltimoFirebase({
-            temperatura: ultimo.temperatura || 0,
-            humedad: ultimo.humedad || 0,
-            humedad_suelo: ultimo.humedad_suelo || 0,
-            lluvia: ultimo.lluvia < 0 ? 0 : ultimo.lluvia || 0,
-            uvIndex: ultimo.uvIndex || 0,
-            timestamp: ultimo.timestamp || 0,
-            totalRegistros: registros.length
-          });
-        }
+// Obtener última key insertada (Firebase las ordena por tiempo)
+const keys = Object.keys(registrosObj);
+
+if (keys.length > 0) {
+  const lastKey = keys[keys.length - 1];
+  const ultimo = registrosObj[lastKey];
+
+  setUltimoFirebase({
+    temperatura: ultimo.temperatura || 0,
+    humedad: ultimo.humedad || 0,
+    humedad_suelo: ultimo.humedad_suelo || 0,
+    lluvia: ultimo.lluvia < 0 ? 0 : ultimo.lluvia || 0,
+    uvIndex: ultimo.uvIndex || 0,
+    timestamp: ultimo.timestamp || '',
+    totalRegistros: keys.length
+  });
+}
+
 
         // ⭐ CONVERTIR Firebase al formato del CSV
         const firebaseComoCSV = registros.map((r) => {
@@ -101,24 +115,12 @@ const ProfesoresView = ({ user, apiBaseUrl, onLogout }) => {
             }
           }
 
-         let radiacion = 0;
-
-if (uvIndex === 0) {
-  radiacion = 0;
-} else if (uvIndex <= 2) {
-  radiacion = 4.5;
-} else if (uvIndex <= 5) {
-  radiacion = 4.8;
-} else {
-  radiacion = 5.0;
-}
-
           const viabilidad = calcularViabilidad(temp, humedad, lluvia);
 
           return {
             date: fecha,
             temperatura: temp,
-            radiacion_solar: radiacion ,
+            radiacion_solar: uvIndex ,
             humedad_suelo: humedadSuelo,
             humedad: humedad,
             precipitacion: lluvia,
@@ -198,7 +200,7 @@ if (uvIndex === 0) {
     combinados.sort((a, b) => new Date(a.date) - new Date(b.date));
     
     setDatos(combinados);
-    console.log(`📊 Profesor: ${datosCSV.length} CSV + ${firebaseNuevos.length} Firebase = ${combinados.length} total`);
+
   }, [datosCSV, datosFirebaseArray]);
 
   // ========================================================================
