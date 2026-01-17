@@ -578,20 +578,26 @@ const handlePrediccionesActualizadas = useCallback((predicciones) => {
           ...value
         }));
 
-        registros.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-        // Guardar último para tiempo real
-        if (registros[0]) {
-          setUltimoFirebase({
-            temperatura: registros[0].temperatura || 0,
-            humedad: registros[0].humedad || 0,
-            humedad_suelo: registros[0].humedad_suelo || 0,
-            lluvia: registros[0].lluvia < 0 ? 0 : registros[0].lluvia || 0,
-            uvIndex: registros[0].uvIndex || 0,
-            timestamp: registros[0].timestamp || 0,
-            totalRegistros: registros.length
-          });
-        }
+const registrosObj = data;
+
+// Obtener última key insertada (Firebase las ordena por tiempo)
+const keys = Object.keys(registrosObj);
+
+if (keys.length > 0) {
+  const lastKey = keys[keys.length - 1];
+  const ultimo = registrosObj[lastKey];
+
+  setUltimoFirebase({
+    temperatura: ultimo.temperatura || 0,
+    humedad: ultimo.humedad || 0,
+    humedad_suelo: ultimo.humedad_suelo || 0,
+    lluvia: ultimo.lluvia < 0 ? 0 : ultimo.lluvia || 0,
+    uvIndex: ultimo.uvIndex || 0,
+    timestamp: ultimo.timestamp || '',
+    totalRegistros: keys.length
+  });
+}
 
         // ⭐ CONVERTIR Firebase al formato del CSV
         const firebaseComoCSV = registros.map((r) => {
