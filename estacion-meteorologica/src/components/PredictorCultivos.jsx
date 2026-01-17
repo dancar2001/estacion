@@ -64,6 +64,8 @@ const PredictorCultivos = ({
     } finally {
       setLoading(false);
     }
+    
+
   };
 
   if (loading) {
@@ -85,44 +87,7 @@ const PredictorCultivos = ({
 
   return (
     <div className="space-y-4">
-      {/* ╔══════════════════════════════════════════════════════════════╗ */}
-      {/* ║ PARTE 1: TARJETA SIMPLIFICADA (como en la imagen)           ║ */}
-      {/* ║ SIEMPRE VISIBLE - No se puede contraer                      ║ */}
-      {/* ╚══════════════════════════════════════════════════════════════╝ */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-          <TrendingUp className="text-green-600" />
-          🌾 Predicciones de Cultivos (Modelo CSV)
-        </h3>
-
-        {/* CONDICIONES ACTUALES */}
-        <div className="bg-blue-50 p-4 rounded-lg mb-6 border-2 border-blue-200">
-          <p className="text-sm font-semibold text-gray-700 mb-3">Condiciones Actuales:</p>
-          <div className="grid grid-cols-5 gap-2">
-            <div className="bg-white p-2 rounded text-center">
-              <p className="text-xs text-gray-600">Temp</p>
-              <p className="text-lg font-bold text-red-600">{temperatura}°C</p>
-            </div>
-            <div className="bg-white p-2 rounded text-center">
-              <p className="text-xs text-gray-600">Rad</p>
-              <p className="text-lg font-bold text-yellow-600">{radiacion.toFixed(1)} kW/m²</p>
-            </div>
-            <div className="bg-white p-2 rounded text-center">
-              <p className="text-xs text-gray-600">H. Suelo</p>
-              <p className="text-lg font-bold text-amber-600">{humedadSuelo}%</p>
-            </div>
-            <div className="bg-white p-2 rounded text-center">
-              <p className="text-xs text-gray-600">H. Rel</p>
-              <p className="text-lg font-bold text-blue-600">{humedadRelativa}%</p>
-            </div>
-            <div className="bg-white p-2 rounded text-center">
-              <p className="text-xs text-gray-600">Pluvia</p>
-              <p className="text-lg font-bold text-cyan-600">{pluviometria} mm</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
+ 
       {/* ╔══════════════════════════════════════════════════════════════╗ */}
       {/* ║ PARTE 2: PANEL EXPANDIBLE CON K-MEANS + ANÁLISIS COMPLETO   ║ */}
       {/* ║ COLAPSABLE - El usuario decide si quiere ver los detalles   ║ */}
@@ -217,61 +182,60 @@ const PredictorCultivos = ({
                 </h4>
 
                 <div className="space-y-3">
-                  {resultado.predicciones.map((pred) => (
-                    <div
-                      key={pred.cultivo}
-                      style={{
-                        padding: '12px',
-                        backgroundColor: pred.es_optimo_en_cluster
-                          ? '#f0fdf4'
-                          : '#f9fafb',
-                        borderRadius: '6px',
-                        borderLeft: `3px solid ${
-                          pred.viabilidad ? '#10b981' : '#ef4444'
-                        }`
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center'
-                        }}
-                      >
-                        <div>
-                          <strong>{pred.cultivo}</strong>
-                          {pred.es_optimo_en_cluster && (
-                            <span
-                              style={{
-                                marginLeft: '8px',
-                                fontSize: '12px',
-                                color: '#10b981',
-                                fontWeight: 'bold'
-                              }}
-                            >
-                              ⭐ Óptimo en este perfil
-                            </span>
-                          )}
-                        </div>
+                  
+{resultado.predicciones.map((pred) => {
+  const esViableVisual = pred.viabilidad || pred.es_optimo_en_cluster;
 
-                        <span
-                          style={{
-                            padding: '4px 12px',
-                            borderRadius: '20px',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            color: '#fff',
-                            backgroundColor: pred.viabilidad
-                              ? '#10b981'
-                              : '#ef4444'
-                          }}
-                        >
-                          {pred.viabilidad ? '✅ Viable' : '❌ No viable'} (
-                          {pred.confianza}%)
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+  return (
+    <div
+      key={pred.cultivo}
+      style={{
+        padding: '12px',
+        backgroundColor: esViableVisual ? '#f0fdf4' : '#fef2f2',
+        borderRadius: '6px',
+        borderLeft: `3px solid ${esViableVisual ? '#10b981' : '#ef4444'}`
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}
+      >
+        <div>
+          <strong>{pred.cultivo}</strong>
+          {pred.es_optimo_en_cluster && (
+            <span
+              style={{
+                marginLeft: '8px',
+                fontSize: '12px',
+                color: '#10b981',
+                fontWeight: 'bold'
+              }}
+            >
+              ⭐ Óptimo en este perfil
+            </span>
+          )}
+        </div>
+
+        <span
+          style={{
+            padding: '4px 12px',
+            borderRadius: '20px',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            color: '#fff',
+            backgroundColor: esViableVisual ? '#10b981' : '#ef4444'
+          }}
+        >
+          {esViableVisual ? '✅ Viable' : '❌ No viable'} ({pred.confianza}%)
+        </span>
+      </div>
+    </div>
+  );
+})}
+
                 </div>
               </div>
 
