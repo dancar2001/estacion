@@ -40,7 +40,7 @@ class MLService {
         id: 2,
         nombre: '☀️ Condiciones Secas',
         descripcion: 'Días con baja precipitación y humedad reducida',
-        cultivos_optimos: ['Maiz', 'Arroz'],
+        cultivos_optimos: ['Maiz', 'Arroz', 'Cacao'],
         temperatura: 26.29,
         radiacion: 4.50,
         humedad_suelo: 78.45,
@@ -51,8 +51,28 @@ class MLService {
         color: '#f59e0b'
       }
     ];
+  }
 
-    // ✅ SIN SINCRONIZACIÓN - Solo carga CSV local
+  // ========================================================================
+  // ⭐ NUEVO: CALCULAR VIABILIDAD CON RANGOS ACTUALIZADOS PARA MILAGRO, ECUADOR
+  // ========================================================================
+  calcularViabilidad(temp, humedad, lluvia) {
+    return {
+      // Tomate: 20-32°C, humedad 50-85%, lluvia 1-15mm
+      Tomate: (temp >= 20 && temp <= 32 && lluvia >= 1 && lluvia <= 15 && humedad >= 50 && humedad <= 85) ? 'Sí' : 'No',
+      
+      // Banana: 20-32°C, lluvia 2-35mm
+      Banana: (temp >= 20 && temp <= 32 && lluvia >= 2 && lluvia <= 35) ? 'Sí' : 'No',
+      
+      // Cacao: 21-32°C, lluvia < 45mm (muy tolerante)
+      Cacao: (temp >= 21 && temp <= 32 && lluvia < 45) ? 'Sí' : 'No',
+      
+      // Arroz: 22-32°C, lluvia 2-30mm
+      Arroz: (temp >= 22 && temp <= 32 && lluvia >= 2 && lluvia <= 30) ? 'Sí' : 'No',
+      
+      // Maíz: 20-32°C, lluvia 1-20mm
+      Maiz: (temp >= 20 && temp <= 32 && lluvia >= 1 && lluvia <= 20) ? 'Sí' : 'No',
+    };
   }
 
   /**
@@ -74,7 +94,7 @@ class MLService {
             complete: (results) => {
               this.cultivosData = results.data;
               this.isLoaded = true;
-              console.log('✅ CSV Cargado:', this.cultivosData.length, 'registros');
+
               resolve(this.cultivosData);
             },
             error: (error) => {
@@ -140,6 +160,7 @@ class MLService {
 
   /**
    * PREDICCIÓN CON CONTEXTO DE CLUSTER
+   * ⭐ MODIFICADO: Ahora calcula viabilidad con rangos nuevos en lugar de leer del CSV
    */
   async predecirCultivos(temperatura, radiacion, humedadSuelo, humedadRelativa, pluviometria) {
     if (!this.isLoaded) {
@@ -154,7 +175,10 @@ class MLService {
       pluviometria
     );
 
-    let mejorCoincidencia = null;
+    // ⭐ CALCULAR VIABILIDAD CON LOS RANGOS NUEVOS (no leer del CSV)
+    const viabilidadCalculada = this.calcularViabilidad(temperatura, humedadRelativa, pluviometria);
+
+    // Calcular distancia mínima al CSV para la confianza
     let menorDistancia = Infinity;
 
     this.cultivosData.forEach(row => {
@@ -176,13 +200,14 @@ class MLService {
 
       if (distancia < menorDistancia) {
         menorDistancia = distancia;
-        mejorCoincidencia = row;
       }
     });
 
+    const confianzaPrediccion = Math.max(0, 100 - menorDistancia * 10);
+
+    // ⭐ GENERAR PREDICCIONES CON VIABILIDAD CALCULADA
     const predicciones = this.cultivos.map(cultivo => {
-      const esViable = mejorCoincidencia[cultivo] === 'Sí';
-      const confianzaPrediccion = Math.max(0, 100 - menorDistancia * 10);
+      const esViable = viabilidadCalculada[cultivo] === 'Sí';
 
       return {
         cultivo,
@@ -192,7 +217,7 @@ class MLService {
         prediccion_temperatura: parseFloat(temperatura.toFixed(1)),
         prediccion_humedad: parseFloat(humedadRelativa.toFixed(1)),
         prediccion_precipitacion: parseFloat(pluviometria.toFixed(1)),
-        modelo_version: '2.0',
+        modelo_version: '2.1',  // ⭐ Nueva versión
         generado_en: new Date().toISOString(),
       };
     });
@@ -211,7 +236,6 @@ class MLService {
    */
   generarResumen(clusterInfo, predicciones) {
     const viables = predicciones.filter(p => p.viabilidad).map(p => p.cultivo);
-    const optimosHoy = predicciones.filter(p => p.es_optimo_en_cluster && p.viabilidad).map(p => p.cultivo);
 
     let resumen = `Perfil: ${clusterInfo.cluster_nombre} (${clusterInfo.confianza}% confianza)\n`;
 
@@ -219,10 +243,6 @@ class MLService {
       resumen += `⚠️ Ningún cultivo es viable hoy.\n`;
     } else {
       resumen += `✅ Cultivos viables: ${viables.join(', ')}\n`;
-    }
-
-    if (optimosHoy.length > 0) {
-      resumen += `⭐ Óptimos en este perfil: ${optimosHoy.join(', ')}`;
     }
 
     return resumen;
