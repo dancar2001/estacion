@@ -205,8 +205,10 @@ if (keys.length > 0) {
     const firebaseNuevos = datosFirebaseArray.filter(d => !fechasCSV.has(d.date));
     
     const combinados = [...datosCSV, ...firebaseNuevos];
-    combinados.sort((a, b) => new Date(a.date) - new Date(b.date));
-    
+    //combinados.sort((a, b) => new Date(a.date) - new Date(b.date));
+    // ✅ BIEN
+combinados.sort((a, b) => a.date.localeCompare(b.date));
+
     setDatos(combinados);
 
   }, [datosCSV, datosFirebaseArray]);
