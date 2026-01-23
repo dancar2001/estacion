@@ -214,13 +214,16 @@ if (keys.length > 0) {
   // ========================================================================
   // EFECTOS
   // ========================================================================
-  useEffect(() => {
-    fetchCSV();
-    fetchFirebase();
-
-    const intervalFirebase = setInterval(fetchFirebase, 30000);
-    return () => clearInterval(intervalFirebase);
-  }, [fetchCSV, fetchFirebase]);
+useEffect(() => {
+    const fechasCSV = new Set(datosCSV.map(d => d.date));
+    const firebaseNuevos = datosFirebaseArray.filter(d => !fechasCSV.has(d.date));
+    
+    const combinados = [...datosCSV, ...firebaseNuevos];
+    // ✅ ORDENAR POR STRING - evita problemas de zona horaria
+    combinados.sort((a, b) => a.date.localeCompare(b.date));
+    
+    setDatos(combinados);
+  }, [datosCSV, datosFirebaseArray]);
 
   // ========================================================================
   // ESTADÍSTICAS
