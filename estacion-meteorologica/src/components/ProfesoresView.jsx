@@ -99,27 +99,19 @@ if (keys.length > 0) {
           const lluvia = r.lluvia < 0 ? 0 : r.lluvia || 0;  // Valores negativos = 0
           const uvIndex = r.uvIndex || 0;
           
-// ⭐ PARSEAR TIMESTAMP - formato "YY/MM/DD HH:MM" (ej: "26/01/22 17:04")
+          // ⭐ PARSEAR TIMESTAMP - puede ser número o string "YY/MM/DD"
           let fecha = new Date().toISOString().slice(0, 10);
           if (r.timestamp) {
             if (typeof r.timestamp === 'string') {
-              // Formato "YY/MM/DD HH:MM" → "26/01/22 17:04" = 22 de enero de 2026
-              const [fechaParte] = r.timestamp.split(' ');
-              const partes = fechaParte.split('/');
+              // Formato "YY/MM/DD" o "25/12/11"
+              const partes = r.timestamp.split('/');
               if (partes.length === 3) {
-                const año = '20' + partes[0];  // 26 → 2026
-                const mes = partes[1];  // 01
-                const dia = partes[2];  // 22
-                // ⭐ DIRECTO SIN CONVERSIÓN - evita problemas de zona horaria
-                fecha = `${año}-${mes}-${dia}`;
+                const año = partes[0].length === 2 ? '20' + partes[0] : partes[0];
+                fecha = `${año}-${partes[1].padStart(2, '0')}-${partes[2].padStart(2, '0')}`;
               }
             } else if (typeof r.timestamp === 'number') {
-              // Para timestamps numéricos, usar fecha local
-              const dateObj = new Date(r.timestamp > 10000000000 ? r.timestamp : r.timestamp * 1000);
-              const año = dateObj.getFullYear();
-              const mes = String(dateObj.getMonth() + 1).padStart(2, '0');
-              const dia = String(dateObj.getDate()).padStart(2, '0');
-              fecha = `${año}-${mes}-${dia}`;
+              const ts = r.timestamp > 10000000000 ? r.timestamp / 1000 : r.timestamp;
+              fecha = new Date(ts * 1000).toISOString().slice(0, 10);
             }
           }
 
@@ -205,10 +197,8 @@ if (keys.length > 0) {
     const firebaseNuevos = datosFirebaseArray.filter(d => !fechasCSV.has(d.date));
     
     const combinados = [...datosCSV, ...firebaseNuevos];
-    //combinados.sort((a, b) => new Date(a.date) - new Date(b.date));
-    // ✅ BIEN
-combinados.sort((a, b) => a.date.localeCompare(b.date));
-
+    combinados.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
     setDatos(combinados);
 
   }, [datosCSV, datosFirebaseArray]);
@@ -216,16 +206,13 @@ combinados.sort((a, b) => a.date.localeCompare(b.date));
   // ========================================================================
   // EFECTOS
   // ========================================================================
-useEffect(() => {
-    const fechasCSV = new Set(datosCSV.map(d => d.date));
-    const firebaseNuevos = datosFirebaseArray.filter(d => !fechasCSV.has(d.date));
-    
-    const combinados = [...datosCSV, ...firebaseNuevos];
-    // ✅ ORDENAR POR STRING - evita problemas de zona horaria
-    combinados.sort((a, b) => a.date.localeCompare(b.date));
-    
-    setDatos(combinados);
-  }, [datosCSV, datosFirebaseArray]);
+  useEffect(() => {
+    fetchCSV();
+    fetchFirebase();
+
+    const intervalFirebase = setInterval(fetchFirebase, 30000);
+    return () => clearInterval(intervalFirebase);
+  }, [fetchCSV, fetchFirebase]);
 
   // ========================================================================
   // ESTADÍSTICAS
