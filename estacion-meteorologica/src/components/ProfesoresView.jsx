@@ -99,18 +99,18 @@ if (keys.length > 0) {
           const lluvia = r.lluvia < 0 ? 0 : r.lluvia || 0;  // Valores negativos = 0
           const uvIndex = r.uvIndex || 0;
           
-// ⭐ PARSEAR TIMESTAMP - puede ser número o string "DD/MM/YY HH:MM"
+// ⭐ PARSEAR TIMESTAMP - formato "YY/MM/DD HH:MM" (ej: "26/01/22 17:04")
           let fecha = new Date().toISOString().slice(0, 10);
           if (r.timestamp) {
             if (typeof r.timestamp === 'string') {
-              // Formato "DD/MM/YY HH:MM" o "26/01/22 17:04"
+              // Formato "YY/MM/DD HH:MM" → "26/01/22 17:04" = 22 de enero de 2026
               const [fechaParte] = r.timestamp.split(' ');
               const partes = fechaParte.split('/');
               if (partes.length === 3) {
-                const dia = partes[0].padStart(2, '0');
-                const mes = partes[1].padStart(2, '0');
-                const año = partes[2].length === 2 ? '20' + partes[2] : partes[2];
-                fecha = `${año}-${mes}-${dia}`;
+                const año = '20' + partes[0];  // 26 → 2026
+                const mes = partes[1].padStart(2, '0');  // 01
+                const dia = partes[2].padStart(2, '0');  // 22
+                fecha = `${año}-${mes}-${dia}`;  // 2026-01-22
               }
             } else if (typeof r.timestamp === 'number') {
               const ts = r.timestamp > 10000000000 ? r.timestamp / 1000 : r.timestamp;
