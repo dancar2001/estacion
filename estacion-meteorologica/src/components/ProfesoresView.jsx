@@ -108,13 +108,18 @@ if (keys.length > 0) {
               const partes = fechaParte.split('/');
               if (partes.length === 3) {
                 const año = '20' + partes[0];  // 26 → 2026
-                const mes = partes[1].padStart(2, '0');  // 01
-                const dia = partes[2].padStart(2, '0');  // 22
-                fecha = `${año}-${mes}-${dia}`;  // 2026-01-22
+                const mes = partes[1];  // 01
+                const dia = partes[2];  // 22
+                // ⭐ DIRECTO SIN CONVERSIÓN - evita problemas de zona horaria
+                fecha = `${año}-${mes}-${dia}`;
               }
             } else if (typeof r.timestamp === 'number') {
-              const ts = r.timestamp > 10000000000 ? r.timestamp / 1000 : r.timestamp;
-              fecha = new Date(ts * 1000).toISOString().slice(0, 10);
+              // Para timestamps numéricos, usar fecha local
+              const dateObj = new Date(r.timestamp > 10000000000 ? r.timestamp : r.timestamp * 1000);
+              const año = dateObj.getFullYear();
+              const mes = String(dateObj.getMonth() + 1).padStart(2, '0');
+              const dia = String(dateObj.getDate()).padStart(2, '0');
+              fecha = `${año}-${mes}-${dia}`;
             }
           }
 
