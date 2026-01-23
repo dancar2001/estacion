@@ -99,19 +99,20 @@ if (keys.length > 0) {
           const lluvia = r.lluvia < 0 ? 0 : r.lluvia || 0;  // Valores negativos = 0
           const uvIndex = r.uvIndex || 0;
           
-          // ⭐ PARSEAR TIMESTAMP - puede ser número o string "YY/MM/DD"
+// ⭐ PARSEAR TIMESTAMP - puede ser número o string "DD/MM/YY HH:MM"
           let fecha = new Date().toISOString().slice(0, 10);
-if (typeof r.timestamp === 'string') {
-  // Formato "DD/MM/YY HH:MM" o "26/01/22 17:04"
-  const [fechaParte] = r.timestamp.split(' ');
-  const partes = fechaParte.split('/');
-  if (partes.length === 3) {
-    const dia = partes[0].padStart(2, '0');
-    const mes = partes[1].padStart(2, '0');
-    const año = partes[2].length === 2 ? '20' + partes[2] : partes[2];
-    fecha = `${año}-${mes}-${dia}`;
-  }
-} else if (typeof r.timestamp === 'number') {
+          if (r.timestamp) {
+            if (typeof r.timestamp === 'string') {
+              // Formato "DD/MM/YY HH:MM" o "26/01/22 17:04"
+              const [fechaParte] = r.timestamp.split(' ');
+              const partes = fechaParte.split('/');
+              if (partes.length === 3) {
+                const dia = partes[0].padStart(2, '0');
+                const mes = partes[1].padStart(2, '0');
+                const año = partes[2].length === 2 ? '20' + partes[2] : partes[2];
+                fecha = `${año}-${mes}-${dia}`;
+              }
+            } else if (typeof r.timestamp === 'number') {
               const ts = r.timestamp > 10000000000 ? r.timestamp / 1000 : r.timestamp;
               fecha = new Date(ts * 1000).toISOString().slice(0, 10);
             }
