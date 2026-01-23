@@ -101,15 +101,17 @@ if (keys.length > 0) {
           
           // ⭐ PARSEAR TIMESTAMP - puede ser número o string "YY/MM/DD"
           let fecha = new Date().toISOString().slice(0, 10);
-          if (r.timestamp) {
-            if (typeof r.timestamp === 'string') {
-              // Formato "YY/MM/DD" o "25/12/11"
-              const partes = r.timestamp.split('/');
-              if (partes.length === 3) {
-                const año = partes[0].length === 2 ? '20' + partes[0] : partes[0];
-                fecha = `${año}-${partes[1].padStart(2, '0')}-${partes[2].padStart(2, '0')}`;
-              }
-            } else if (typeof r.timestamp === 'number') {
+if (typeof r.timestamp === 'string') {
+  // Formato "DD/MM/YY HH:MM" o "26/01/22 17:04"
+  const [fechaParte] = r.timestamp.split(' ');
+  const partes = fechaParte.split('/');
+  if (partes.length === 3) {
+    const dia = partes[0].padStart(2, '0');
+    const mes = partes[1].padStart(2, '0');
+    const año = partes[2].length === 2 ? '20' + partes[2] : partes[2];
+    fecha = `${año}-${mes}-${dia}`;
+  }
+} else if (typeof r.timestamp === 'number') {
               const ts = r.timestamp > 10000000000 ? r.timestamp / 1000 : r.timestamp;
               fecha = new Date(ts * 1000).toISOString().slice(0, 10);
             }
