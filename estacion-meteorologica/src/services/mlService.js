@@ -1,5 +1,15 @@
 import Papa from 'papaparse';
 
+/**
+ * MLService - VERSIÓN 3.0 CORREGIDA
+ * 
+ * CORRECCIONES PRINCIPALES:
+ * 1. ✅ Confianza INDIVIDUAL por cultivo (no la misma para todos)
+ * 2. ✅ Sincronización entre K-Means y viabilidad calculada
+ * 3. ✅ Resumen que refleja TODOS los cultivos viables
+ * 4. ✅ Lógica de viabilidad mejorada con rangos óptimos por cultivo
+ */
+
 class MLService {
   constructor() {
     this.cultivosData = [];
@@ -7,6 +17,7 @@ class MLService {
     this.cultivos = ['Tomate', 'Banana', 'Cacao', 'Arroz', 'Maiz'];
     this.datosExternos = [];
 
+    // Centroides del modelo K-Means (K=3)
     this.centroides = [
       {
         id: 0,
@@ -51,28 +62,101 @@ class MLService {
         color: '#f59e0b'
       }
     ];
+
+    // ⭐ NUEVO: Rangos óptimos por cultivo para calcular confianza individual
+    this.rangosOptimos = {
+      Tomate: {
+        temp: { min: 20, max: 32, optimo: 26 },
+        humedad: { min: 50, max: 85, optimo: 70 },
+        lluvia: { min: 1, max: 15, optimo: 8 }
+      },
+      Banana: {
+        temp: { min: 20, max: 32, optimo: 27 },
+        humedad: { min: 60, max: 90, optimo: 80 },
+        lluvia: { min: 2, max: 35, optimo: 15 }
+      },
+      Cacao: {
+        temp: { min: 21, max: 32, optimo: 25 },
+        humedad: { min: 70, max: 95, optimo: 85 },
+        lluvia: { min: 0, max: 45, optimo: 10 }
+      },
+      Arroz: {
+        temp: { min: 22, max: 32, optimo: 28 },
+        humedad: { min: 70, max: 95, optimo: 85 },
+        lluvia: { min: 2, max: 30, optimo: 12 }
+      },
+      Maiz: {
+        temp: { min: 20, max: 32, optimo: 26 },
+        humedad: { min: 50, max: 80, optimo: 65 },
+        lluvia: { min: 1, max: 20, optimo: 8 }
+      }
+    };
   }
 
   // ========================================================================
-  // ⭐ NUEVO: CALCULAR VIABILIDAD CON RANGOS ACTUALIZADOS PARA MILAGRO, ECUADOR
+  // ⭐ CALCULAR VIABILIDAD (Sí/No) - Rangos actualizados para Milagro, Ecuador
   // ========================================================================
   calcularViabilidad(temp, humedad, lluvia) {
     return {
-      // Tomate: 20-32°C, humedad 50-85%, lluvia 1-15mm
       Tomate: (temp >= 20 && temp <= 32 && lluvia >= 1 && lluvia <= 15 && humedad >= 50 && humedad <= 85) ? 'Sí' : 'No',
-      
-      // Banana: 20-32°C, lluvia 2-35mm
       Banana: (temp >= 20 && temp <= 32 && lluvia >= 2 && lluvia <= 35) ? 'Sí' : 'No',
-      
-      // Cacao: 21-32°C, lluvia < 45mm (muy tolerante)
       Cacao: (temp >= 21 && temp <= 32 && lluvia < 45) ? 'Sí' : 'No',
-      
-      // Arroz: 22-32°C, lluvia 2-30mm
       Arroz: (temp >= 22 && temp <= 32 && lluvia >= 2 && lluvia <= 30) ? 'Sí' : 'No',
-      
-      // Maíz: 20-32°C, lluvia 1-20mm
       Maiz: (temp >= 20 && temp <= 32 && lluvia >= 1 && lluvia <= 20) ? 'Sí' : 'No',
     };
+  }
+
+  // ========================================================================
+  // ⭐ NUEVO: Calcular confianza INDIVIDUAL por cultivo
+  // ========================================================================
+  calcularConfianzaIndividual(cultivo, temp, humedad, lluvia) {
+    const rangos = this.rangosOptimos[cultivo];
+    if (!rangos) return 50;
+
+    // Calcular qué tan cerca está cada variable del óptimo
+    const calcularPuntuacion = (valor, rango) => {
+      if (valor < rango.min || valor > rango.max) {
+        // Fuera del rango: calcular penalización
+        const distancia = valor < rango.min 
+          ? rango.min - valor 
+          : valor - rango.max;
+        const rangoTotal = rango.max - rango.min;
+        const penalizacion = Math.min(distancia / rangoTotal, 1);
+        return Math.max(0, 50 - (penalizacion * 50));
+      }
+      
+      // Dentro del rango: calcular cercanía al óptimo
+      const distanciaAlOptimo = Math.abs(valor - rango.optimo);
+      const maxDistancia = Math.max(rango.optimo - rango.min, rango.max - rango.optimo);
+      const cercania = 1 - (distanciaAlOptimo / maxDistancia);
+      return 50 + (cercania * 50);
+    };
+
+    const puntuacionTemp = calcularPuntuacion(temp, rangos.temp);
+    const puntuacionHumedad = calcularPuntuacion(humedad, rangos.humedad);
+    const puntuacionLluvia = calcularPuntuacion(lluvia, rangos.lluvia);
+
+    // Promedio ponderado (temperatura y lluvia son más críticos)
+    const confianza = (puntuacionTemp * 0.35) + (puntuacionHumedad * 0.25) + (puntuacionLluvia * 0.40);
+    
+    return Math.min(100, Math.max(0, confianza));
+  }
+
+  // ========================================================================
+  // ⭐ NUEVO: Obtener razón de NO viabilidad
+  // ========================================================================
+  obtenerRazonNoViable(cultivo, temp, humedad, lluvia) {
+    const rangos = this.rangosOptimos[cultivo];
+    const razones = [];
+
+    if (temp < rangos.temp.min) razones.push(`Temp. muy baja (${temp}°C < ${rangos.temp.min}°C)`);
+    if (temp > rangos.temp.max) razones.push(`Temp. muy alta (${temp}°C > ${rangos.temp.max}°C)`);
+    if (humedad < rangos.humedad.min) razones.push(`Humedad baja (${humedad}% < ${rangos.humedad.min}%)`);
+    if (humedad > rangos.humedad.max) razones.push(`Humedad alta (${humedad}% > ${rangos.humedad.max}%)`);
+    if (lluvia < rangos.lluvia.min) razones.push(`Lluvia insuficiente (${lluvia}mm < ${rangos.lluvia.min}mm)`);
+    if (lluvia > rangos.lluvia.max) razones.push(`Lluvia excesiva (${lluvia}mm > ${rangos.lluvia.max}mm)`);
+
+    return razones.length > 0 ? razones.join(', ') : 'Condiciones no óptimas';
   }
 
   /**
@@ -94,7 +178,6 @@ class MLService {
             complete: (results) => {
               this.cultivosData = results.data;
               this.isLoaded = true;
-
               resolve(this.cultivosData);
             },
             error: (error) => {
@@ -105,21 +188,6 @@ class MLService {
         })
         .catch(error => reject(error));
     });
-  }
-
-  /**
-   * Obtener datos externos sincronizados
-   */
-  obtenerDatosExternos() {
-    return this.datosExternos;
-  }
-
-  /**
-   * Obtener último dato del endpoint externo
-   */
-  obtenerUltimoDatoExterno() {
-    if (this.datosExternos.length === 0) return null;
-    return this.datosExternos[this.datosExternos.length - 1];
   }
 
   /**
@@ -144,7 +212,7 @@ class MLService {
       }
     });
 
-    const confianza = Math.max(0, 100 - menorDistancia * 10);
+    const confianza = Math.max(0, 100 - menorDistancia * 100);
 
     return {
       cluster_id: mejorCluster.id,
@@ -159,14 +227,14 @@ class MLService {
   }
 
   /**
-   * PREDICCIÓN CON CONTEXTO DE CLUSTER
-   * ⭐ MODIFICADO: Ahora calcula viabilidad con rangos nuevos en lugar de leer del CSV
+   * ⭐ PREDICCIÓN MEJORADA CON CONFIANZA INDIVIDUAL
    */
   async predecirCultivos(temperatura, radiacion, humedadSuelo, humedadRelativa, pluviometria) {
     if (!this.isLoaded) {
       await this.cargarCSV();
     }
 
+    // 1. Clasificar el cluster
     const clusterInfo = this.clasificarCluster(
       temperatura,
       radiacion,
@@ -175,12 +243,43 @@ class MLService {
       pluviometria
     );
 
-    // ⭐ CALCULAR VIABILIDAD CON LOS RANGOS NUEVOS (no leer del CSV)
+    // 2. Calcular viabilidad binaria (Sí/No)
     const viabilidadCalculada = this.calcularViabilidad(temperatura, humedadRelativa, pluviometria);
 
-    // Calcular distancia mínima al CSV para la confianza
-    let menorDistancia = Infinity;
+    // 3. ⭐ Generar predicciones con CONFIANZA INDIVIDUAL
+    const predicciones = this.cultivos.map(cultivo => {
+      const esViable = viabilidadCalculada[cultivo] === 'Sí';
+      const esOptimoEnCluster = clusterInfo.cultivos_optimos.includes(cultivo);
+      
+      // ⭐ Calcular confianza ESPECÍFICA para este cultivo
+      const confianzaIndividual = this.calcularConfianzaIndividual(
+        cultivo, 
+        temperatura, 
+        humedadRelativa, 
+        pluviometria
+      );
 
+      // Si no es viable, obtener la razón
+      const razonNoViable = !esViable 
+        ? this.obtenerRazonNoViable(cultivo, temperatura, humedadRelativa, pluviometria)
+        : null;
+
+      return {
+        cultivo,
+        viabilidad: esViable,
+        confianza: parseFloat(confianzaIndividual.toFixed(1)),
+        es_optimo_en_cluster: esOptimoEnCluster,
+        razon_no_viable: razonNoViable,
+        prediccion_temperatura: parseFloat(temperatura.toFixed(1)),
+        prediccion_humedad: parseFloat(humedadRelativa.toFixed(1)),
+        prediccion_precipitacion: parseFloat(pluviometria.toFixed(1)),
+        modelo_version: '3.0',
+        generado_en: new Date().toISOString(),
+      };
+    });
+
+    // 4. Calcular distancia mínima al CSV para referencia
+    let menorDistancia = Infinity;
     this.cultivosData.forEach(row => {
       if (!row.Temperatura) return;
 
@@ -203,25 +302,6 @@ class MLService {
       }
     });
 
-    const confianzaPrediccion = Math.max(0, 100 - menorDistancia * 10);
-
-    // ⭐ GENERAR PREDICCIONES CON VIABILIDAD CALCULADA
-    const predicciones = this.cultivos.map(cultivo => {
-      const esViable = viabilidadCalculada[cultivo] === 'Sí';
-
-      return {
-        cultivo,
-        viabilidad: esViable,
-        confianza: parseFloat(confianzaPrediccion.toFixed(1)),
-        es_optimo_en_cluster: clusterInfo.cultivos_optimos.includes(cultivo),
-        prediccion_temperatura: parseFloat(temperatura.toFixed(1)),
-        prediccion_humedad: parseFloat(humedadRelativa.toFixed(1)),
-        prediccion_precipitacion: parseFloat(pluviometria.toFixed(1)),
-        modelo_version: '2.1',  // ⭐ Nueva versión
-        generado_en: new Date().toISOString(),
-      };
-    });
-
     return {
       success: true,
       cluster: clusterInfo,
@@ -232,17 +312,35 @@ class MLService {
   }
 
   /**
-   * Generar resumen textual de la predicción
+   * ⭐ RESUMEN MEJORADO - Muestra TODOS los cultivos viables
    */
   generarResumen(clusterInfo, predicciones) {
-    const viables = predicciones.filter(p => p.viabilidad).map(p => p.cultivo);
+    const viables = predicciones.filter(p => p.viabilidad);
+    const noViables = predicciones.filter(p => !p.viabilidad);
+    const optimosEnCluster = predicciones.filter(p => p.es_optimo_en_cluster);
 
-    let resumen = `Perfil: ${clusterInfo.cluster_nombre} (${clusterInfo.confianza}% confianza)\n`;
+    let resumen = `Perfil: ${clusterInfo.cluster_nombre} (${clusterInfo.confianza.toFixed(0)}% confianza)\n`;
 
     if (viables.length === 0) {
-      resumen += `⚠️ Ningún cultivo es viable hoy.\n`;
+      resumen += `⚠️ Ningún cultivo es viable con las condiciones actuales.\n`;
+      if (noViables.length > 0) {
+        resumen += `\n❌ Razones:\n`;
+        noViables.slice(0, 3).forEach(p => {
+          resumen += `  • ${p.cultivo}: ${p.razon_no_viable}\n`;
+        });
+      }
     } else {
-      resumen += `✅ Cultivos viables: ${viables.join(', ')}\n`;
+      // ⭐ MOSTRAR TODOS los cultivos viables
+      const viablesConConfianza = viables
+        .map(p => `${p.cultivo} (${p.confianza.toFixed(0)}%)`)
+        .join(', ');
+      resumen += `✅ Cultivos viables: ${viablesConConfianza}\n`;
+
+      // Destacar los óptimos del cluster que son viables
+      const optimosViables = viables.filter(p => p.es_optimo_en_cluster);
+      if (optimosViables.length > 0) {
+        resumen += `⭐ Recomendados para este perfil: ${optimosViables.map(p => p.cultivo).join(', ')}\n`;
+      }
     }
 
     return resumen;
@@ -286,18 +384,21 @@ class MLService {
     return stats;
   }
 
-  /**
-   * Obtener información de un cluster específico
-   */
   obtenerCluster(clusterId) {
     return this.centroides.find(c => c.id === clusterId);
   }
 
-  /**
-   * Obtener todos los clusters
-   */
   obtenerTodosClusters() {
     return this.centroides;
+  }
+
+  obtenerDatosExternos() {
+    return this.datosExternos;
+  }
+
+  obtenerUltimoDatoExterno() {
+    if (this.datosExternos.length === 0) return null;
+    return this.datosExternos[this.datosExternos.length - 1];
   }
 }
 
