@@ -54,7 +54,7 @@ const ProfesoresView = ({ user, apiBaseUrl, onLogout }) => {
   };
 
   // ========================================================================
-  // ⭐ CARGAR DATOS DE FIREBASE Y AGRUPAR POR FECHA
+  // ⭐ CARGAR DATOS DE FIREBASE Y AGRUPAR POR FECHA (SIN DUPLICADOS)
   // ========================================================================
   const fetchFirebase = useCallback(async () => {
     try {
@@ -67,6 +67,7 @@ const ProfesoresView = ({ user, apiBaseUrl, onLogout }) => {
       if (data) {
         // ⭐ AGRUPAR POR FECHA
         const registrosPorFecha = {};
+        const totalRegistrosFirebase = Object.keys(data).length;
 
         Object.entries(data).forEach(([key, value]) => {
           const temp = value.temperatura || 0;
@@ -139,6 +140,11 @@ const ProfesoresView = ({ user, apiBaseUrl, onLogout }) => {
           })
           .sort((a, b) => new Date(a.date) - new Date(b.date));
 
+        // ⭐ LOGUEAR INFO
+        console.log('✅ Firebase - Total registros crudos:', totalRegistrosFirebase);
+        console.log('✅ Firebase - Fechas únicas después de agrupar:', firebaseComoCSV.length);
+        console.log('✅ Firebase - Datos agrupados:', firebaseComoCSV);
+
         setDatosFirebaseArray(firebaseComoCSV);
 
         // ⭐ OBTENER ÚLTIMO REGISTRO
@@ -151,17 +157,17 @@ const ProfesoresView = ({ user, apiBaseUrl, onLogout }) => {
             lluvia: ultimoRegistro.precipitacion,
             uvIndex: ultimoRegistro.radiacion_solar,
             timestamp: ultimoRegistro.date,
-            totalRegistros: Object.keys(data).length
+            totalRegistros: totalRegistrosFirebase
           });
         }
       }
     } catch (err) {
-      console.error('Error Firebase:', err);
+      console.error('❌ Error Firebase:', err);
       setErrorFirebase('Error al conectar con sensores');
     } finally {
       setLoadingFirebase(false);
     }
-  }, []);
+  }, [calcularViabilidad]);
 
   // ========================================================================
   // CARGAR CSV
@@ -492,9 +498,9 @@ const ProfesoresView = ({ user, apiBaseUrl, onLogout }) => {
             <span className={`w-2 h-2 rounded-full ${ultimoFirebase ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></span>
             {ultimoFirebase ? '🔴 EN VIVO' : 'Sin conexión'}
           </span>
-          <span className="text-gray-500">📁 {datosCSV.length} CSV</span>
-          <span className="text-gray-500">🔥 {datosFirebaseArray.length} Firebase (agrupado)</span>
-          <span className="text-purple-600 font-bold">📊 {datos.length} TOTAL</span>
+          <span className="text-gray-500 border-l pl-4">📁 CSV: {datosCSV.length} registros</span>
+          <span className="text-gray-500 border-l pl-4">🔥 Firebase: {datosFirebaseArray.length} fechas ({ultimoFirebase?.totalRegistros || 0} muestras)</span>
+          <span className="text-purple-600 font-bold border-l pl-4">📊 Total: {datos.length} registros únicos</span>
         </div>
       </div>
 
