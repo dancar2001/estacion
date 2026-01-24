@@ -34,27 +34,27 @@ const ProfesoresView = ({ user, apiBaseUrl, onLogout }) => {
   // ========================================================================
   // FUNCIÓN PARA CALCULAR VIABILIDAD
   // ========================================================================
-const calcularViabilidad = (temp, humedad, lluvia) => {
-  return {
-    // Tomate: 20-32°C, humedad 50-80%, lluvia moderada
-    tomate: (temp >= 20 && temp <= 32 && lluvia >= 1 && lluvia <= 15 && humedad >= 50 && humedad <= 85) ? 'Sí' : 'No',
-    
-    // Banana: 20-32°C, lluvia moderada-alta
-    banana: (temp >= 20 && temp <= 32 && lluvia >= 2 && lluvia <= 35) ? 'Sí' : 'No',
-    
-    // Cacao: 21-32°C, lluvia < 45mm (muy tolerante)
-    cacao: (temp >= 21 && temp <= 32 && lluvia < 45) ? 'Sí' : 'No',
-    
-    // Arroz: 22-32°C, necesita más agua
-    arroz: (temp >= 22 && temp <= 32 && lluvia >= 2 && lluvia <= 30) ? 'Sí' : 'No',
-    
-    // Maíz: 20-32°C, lluvia moderada
-    maiz: (temp >= 20 && temp <= 32 && lluvia >= 1 && lluvia <= 20) ? 'Sí' : 'No',
+  const calcularViabilidad = (temp, humedad, lluvia) => {
+    return {
+      // Tomate: 20-32°C, humedad 50-80%, lluvia moderada
+      tomate: (temp >= 20 && temp <= 32 && lluvia >= 1 && lluvia <= 15 && humedad >= 50 && humedad <= 85) ? 'Sí' : 'No',
+      
+      // Banana: 20-32°C, lluvia moderada-alta
+      banana: (temp >= 20 && temp <= 32 && lluvia >= 2 && lluvia <= 35) ? 'Sí' : 'No',
+      
+      // Cacao: 21-32°C, lluvia < 45mm (muy tolerante)
+      cacao: (temp >= 21 && temp <= 32 && lluvia < 45) ? 'Sí' : 'No',
+      
+      // Arroz: 22-32°C, necesita más agua
+      arroz: (temp >= 22 && temp <= 32 && lluvia >= 2 && lluvia <= 30) ? 'Sí' : 'No',
+      
+      // Maíz: 20-32°C, lluvia moderada
+      maiz: (temp >= 20 && temp <= 32 && lluvia >= 1 && lluvia <= 20) ? 'Sí' : 'No',
+    };
   };
-};
 
   // ========================================================================
-  // ⭐ CARGAR DATOS DE FIREBASE Y CONVERTIR A FORMATO CSV
+  // ⭐ CARGAR DATOS DE FIREBASE Y AGRUPAR POR FECHA
   // ========================================================================
   const fetchFirebase = useCallback(async () => {
     try {
@@ -65,75 +65,95 @@ const calcularViabilidad = (temp, humedad, lluvia) => {
       const data = await response.json();
 
       if (data) {
-        const registros = Object.entries(data).map(([key, value]) => ({
-          id: key,
-          ...value
-        }));
+        // ⭐ AGRUPAR POR FECHA
+        const registrosPorFecha = {};
 
-const registrosObj = data;
+        Object.entries(data).forEach(([key, value]) => {
+          const temp = value.temperatura || 0;
+          const humedad = value.humedad || 0;
+          const humedadSuelo = value.humedad_suelo || 0;
+          const lluvia = value.lluvia < 0 ? 0 : value.lluvia || 0;
+          const uvIndex = value.uvIndex || 0;
 
-// Obtener última key insertada (Firebase las ordena por tiempo)
-const keys = Object.keys(registrosObj);
-
-if (keys.length > 0) {
-  const lastKey = keys[keys.length - 1];
-  const ultimo = registrosObj[lastKey];
-
-  setUltimoFirebase({
-    temperatura: ultimo.temperatura || 0,
-    humedad: ultimo.humedad || 0,
-    humedad_suelo: ultimo.humedad_suelo || 0,
-    lluvia: ultimo.lluvia < 0 ? 0 : ultimo.lluvia || 0,
-    uvIndex: ultimo.uvIndex || 0,
-    timestamp: ultimo.timestamp || '',
-    totalRegistros: keys.length
-  });
-}
-
-
-        // ⭐ CONVERTIR Firebase al formato del CSV
-        const firebaseComoCSV = registros.map((r) => {
-          const temp = r.temperatura || 0;
-          const humedad = r.humedad || 0;
-          const humedadSuelo = r.humedad_suelo || 0;
-          const lluvia = r.lluvia < 0 ? 0 : r.lluvia || 0;  // Valores negativos = 0
-          const uvIndex = r.uvIndex || 0;
-          
-          // ⭐ PARSEAR TIMESTAMP - puede ser número o string "YY/MM/DD"
+          // ⭐ PARSEAR FECHA CORRECTAMENTE
           let fecha = new Date().toISOString().slice(0, 10);
-          if (r.timestamp) {
-            if (typeof r.timestamp === 'string') {
-              // Formato "YY/MM/DD" o "25/12/11"
-              const partes = r.timestamp.split('/');
+          if (value.timestamp) {
+            if (typeof value.timestamp === 'string') {
+              // Formato "YY/MM/DD HH:MM" → "26/01/22 21:24"
+              const partes = value.timestamp.split(' ')[0].split('/');
               if (partes.length === 3) {
-                const año = partes[0].length === 2 ? '20' + partes[0] : partes[0];
-                fecha = `${año}-${partes[1].padStart(2, '0')}-${partes[2].padStart(2, '0')}`;
+                const año = '20' + partes[0]; // "26" → "2026"
+                const mes = partes[1].padStart(2, '0'); // "01"
+                const dia = partes[2].padStart(2, '0'); // "22"
+                fecha = `${año}-${mes}-${dia}`;
               }
-            } else if (typeof r.timestamp === 'number') {
-              const ts = r.timestamp > 10000000000 ? r.timestamp / 1000 : r.timestamp;
+            } else if (typeof value.timestamp === 'number') {
+              const ts = value.timestamp > 10000000000 ? value.timestamp / 1000 : value.timestamp;
               fecha = new Date(ts * 1000).toISOString().slice(0, 10);
             }
           }
 
-          const viabilidad = calcularViabilidad(temp, humedad, lluvia);
+          // ⭐ AGRUPAR EN DICCIONARIO POR FECHA
+          if (!registrosPorFecha[fecha]) {
+            registrosPorFecha[fecha] = {
+              temperaturas: [],
+              humedades: [],
+              humedadesSuelo: [],
+              lluvias: [],
+              uvIndexes: []
+            };
+          }
 
-          return {
-            date: fecha,
-            temperatura: temp,
-            radiacion_solar: uvIndex ,
-            humedad_suelo: humedadSuelo,
-            humedad: humedad,
-            precipitacion: lluvia,
-            tomate: viabilidad.tomate,
-            banana: viabilidad.banana,
-            cacao: viabilidad.cacao,
-            arroz: viabilidad.arroz,
-            maiz: viabilidad.maiz,
-            fuente: 'firebase'
-          };
+          registrosPorFecha[fecha].temperaturas.push(temp);
+          registrosPorFecha[fecha].humedades.push(humedad);
+          registrosPorFecha[fecha].humedadesSuelo.push(humedadSuelo);
+          registrosPorFecha[fecha].lluvias.push(lluvia);
+          registrosPorFecha[fecha].uvIndexes.push(uvIndex);
         });
 
+        // ⭐ CALCULAR PROMEDIOS Y CREAR UN REGISTRO POR FECHA
+        const firebaseComoCSV = Object.entries(registrosPorFecha)
+          .map(([fecha, valores]) => {
+            const temp = valores.temperaturas.reduce((a, b) => a + b, 0) / valores.temperaturas.length;
+            const humedad = valores.humedades.reduce((a, b) => a + b, 0) / valores.humedades.length;
+            const humedadSuelo = valores.humedadesSuelo.reduce((a, b) => a + b, 0) / valores.humedadesSuelo.length;
+            const lluvia = valores.lluvias.reduce((a, b) => a + b, 0) / valores.lluvias.length;
+            const uvIndex = valores.uvIndexes.reduce((a, b) => a + b, 0) / valores.uvIndexes.length;
+
+            const viabilidad = calcularViabilidad(temp, humedad, lluvia);
+
+            return {
+              date: fecha,
+              temperatura: parseFloat(temp.toFixed(1)),
+              radiacion_solar: parseFloat(uvIndex.toFixed(2)),
+              humedad_suelo: parseFloat(humedadSuelo.toFixed(1)),
+              humedad: parseFloat(humedad.toFixed(1)),
+              precipitacion: parseFloat(lluvia.toFixed(2)),
+              tomate: viabilidad.tomate,
+              banana: viabilidad.banana,
+              cacao: viabilidad.cacao,
+              arroz: viabilidad.arroz,
+              maiz: viabilidad.maiz,
+              fuente: 'firebase'
+            };
+          })
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
+
         setDatosFirebaseArray(firebaseComoCSV);
+
+        // ⭐ OBTENER ÚLTIMO REGISTRO
+        if (firebaseComoCSV.length > 0) {
+          const ultimoRegistro = firebaseComoCSV[firebaseComoCSV.length - 1];
+          setUltimoFirebase({
+            temperatura: ultimoRegistro.temperatura,
+            humedad: ultimoRegistro.humedad,
+            humedad_suelo: ultimoRegistro.humedad_suelo,
+            lluvia: ultimoRegistro.precipitacion,
+            uvIndex: ultimoRegistro.radiacion_solar,
+            timestamp: ultimoRegistro.date,
+            totalRegistros: Object.keys(data).length
+          });
+        }
       }
     } catch (err) {
       console.error('Error Firebase:', err);
@@ -190,7 +210,7 @@ if (keys.length > 0) {
   }, []);
 
   // ========================================================================
-  // ⭐ COMBINAR CSV + FIREBASE
+  // ⭐ COMBINAR CSV + FIREBASE (sin duplicados por fecha)
   // ========================================================================
   useEffect(() => {
     const fechasCSV = new Set(datosCSV.map(d => d.date));
@@ -200,7 +220,6 @@ if (keys.length > 0) {
     combinados.sort((a, b) => new Date(a.date) - new Date(b.date));
     
     setDatos(combinados);
-
   }, [datosCSV, datosFirebaseArray]);
 
   // ========================================================================
@@ -270,15 +289,15 @@ if (keys.length > 0) {
 
   const cultivosViables = contarCultivosViables();
 
-const datosporFuente = [
-  { name: 'Tomate', value: cultivosViables.tomate },
-  { name: 'Banana', value: cultivosViables.banana },
-  { name: 'Cacao', value: cultivosViables.cacao },
-  { name: 'Arroz', value: cultivosViables.arroz },
-  { name: 'Maíz', value: cultivosViables.maiz },
-];
+  const datosporFuente = [
+    { name: 'Tomate', value: cultivosViables.tomate },
+    { name: 'Banana', value: cultivosViables.banana },
+    { name: 'Cacao', value: cultivosViables.cacao },
+    { name: 'Arroz', value: cultivosViables.arroz },
+    { name: 'Maíz', value: cultivosViables.maiz },
+  ];
 
-const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
+  const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
 
   // ========================================================================
   // ⭐ DATOS PARA DASHBOARD RESUMEN
@@ -474,7 +493,7 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
             {ultimoFirebase ? '🔴 EN VIVO' : 'Sin conexión'}
           </span>
           <span className="text-gray-500">📁 {datosCSV.length} CSV</span>
-          <span className="text-gray-500">🔥 {datosFirebaseArray.length} Firebase</span>
+          <span className="text-gray-500">🔥 {datosFirebaseArray.length} Firebase (agrupado)</span>
           <span className="text-purple-600 font-bold">📊 {datos.length} TOTAL</span>
         </div>
       </div>
@@ -587,8 +606,6 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
           </div>
 
           <div className="grid md:grid-cols-1 gap-6">
-            
-
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">📊 Cultivos Viables</h3>
               <ResponsiveContainer width="100%" height={300}>
@@ -679,16 +696,16 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
         </div>
       )}
 
-{/* TAB: PREDICTOR */}
-{activeTab === 'predictor' && (
-  <PredictorCultivos
-    temperatura={ultimoFirebase?.temperatura || datos[datos.length - 1]?.temperatura || 0}
-    radiacion={ultimoFirebase ? (ultimoFirebase.uvIndex / 10) : (datos[datos.length - 1]?.radiacion_solar || 0)}
-    humedadSuelo={ultimoFirebase?.humedad_suelo || datos[datos.length - 1]?.humedad_suelo || 0}
-    humedadRelativa={ultimoFirebase?.humedad || datos[datos.length - 1]?.humedad || 0}
-    pluviometria={ultimoFirebase ? (ultimoFirebase.lluvia / 10) : (datos[datos.length - 1]?.precipitacion || 0)}
-  />
-)}
+      {/* TAB: PREDICTOR */}
+      {activeTab === 'predictor' && (
+        <PredictorCultivos
+          temperatura={ultimoFirebase?.temperatura || datos[datos.length - 1]?.temperatura || 0}
+          radiacion={ultimoFirebase ? (ultimoFirebase.uvIndex / 10) : (datos[datos.length - 1]?.radiacion_solar || 0)}
+          humedadSuelo={ultimoFirebase?.humedad_suelo || datos[datos.length - 1]?.humedad_suelo || 0}
+          humedadRelativa={ultimoFirebase?.humedad || datos[datos.length - 1]?.humedad || 0}
+          pluviometria={ultimoFirebase ? (ultimoFirebase.lluvia / 10) : (datos[datos.length - 1]?.precipitacion || 0)}
+        />
+      )}
 
       {/* TAB: VIABILIDAD */}
       {activeTab === 'viabilidad' && (
