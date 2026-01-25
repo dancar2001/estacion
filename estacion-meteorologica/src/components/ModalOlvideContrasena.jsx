@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Mail, Send, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 
-const ModalOlvideContrasena = ({ isOpen, onClose, apiBaseUrl = 'http://localhost:8000/api' }) => {
+const ModalOlvideContrasena = ({ isOpen, onClose, apiBaseUrl = 'https://dancar.pythonanywhere.com/api' }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
