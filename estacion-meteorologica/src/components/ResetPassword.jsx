@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Eye, EyeOff, CheckCircle, AlertCircle, Loader, ShieldCheck, ArrowLeft } from 'lucide-react';
 
-const ResetPassword = ({ token, onBackToLogin, apiBaseUrl = 'http://localhost:8000/api' }) => {
+const ResetPassword = ({ token, onBackToLogin, apiBaseUrl = 'https://dancar.pythonanywhere.com/api' }) => {
   const [loading, setLoading] = useState(true);
   const [tokenValid, setTokenValid] = useState(false);
   const [tokenError, setTokenError] = useState(null);
