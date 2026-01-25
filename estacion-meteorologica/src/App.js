@@ -94,7 +94,7 @@ const App = () => {
       setError(null);
       setLoading(true);
 
-      const response = await axios.post('http://dancar.pythonanywhere.com/api-token-auth/', {
+      const response = await axios.post('https://dancar.pythonanywhere.com/api-token-auth/', {
         username,
         password,
       });
