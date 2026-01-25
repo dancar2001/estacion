@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
+import ModalOlvideContrasena from './ModalOlvideContrasena';
 
 const Login = ({ onLogin, error }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [localError, setLocalError] = useState(null);
+  
+  // Estado para el modal de recuperación
+  const [modalRecuperarOpen, setModalRecuperarOpen] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -72,6 +76,17 @@ const Login = ({ onLogin, error }) => {
             />
           </div>
 
+          {/* LINK OLVIDÉ CONTRASEÑA */}
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => setModalRecuperarOpen(true)}
+              className="text-sm text-green-600 hover:text-green-700 hover:underline transition"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
+
           {/* ERRORES */}
           {(localError || error) && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
@@ -89,14 +104,18 @@ const Login = ({ onLogin, error }) => {
           </button>
         </form>
 
-
-
         {/* FOOTER */}
         <div className="mt-6 text-center text-xs text-gray-500">
           <p>Universidad Agraria del Ecuador - Campus Milagro</p>
           <p>© 2025 - Todos los derechos reservados</p>
         </div>
       </div>
+
+      {/* MODAL DE RECUPERACIÓN */}
+      <ModalOlvideContrasena 
+        isOpen={modalRecuperarOpen}
+        onClose={() => setModalRecuperarOpen(false)}
+      />
     </div>
   );
 };
