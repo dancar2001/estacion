@@ -5,7 +5,6 @@ import PredictorCultivos from './PredictorCultivos';
 import ModalDescargarPDF from './Modaldescargarpdf';
 import AnalisisKMeans from './AnalisisKMeans';
 import Papa from 'papaparse';
-
 // ============================================================================
 // URL DE FIREBASE
 // ============================================================================
