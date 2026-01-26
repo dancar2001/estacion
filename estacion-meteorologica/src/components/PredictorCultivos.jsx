@@ -232,10 +232,6 @@ const PredictorCultivos = ({
 
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="bg-white/50 p-2 rounded">
-                    <span className="text-gray-500">📊 Confianza Cluster:</span>
-                    <span className="font-bold ml-2">{resultado.cluster.confianza}%</span>
-                  </div>
-                  <div className="bg-white/50 p-2 rounded">
                     <span className="text-gray-500">🎯 Cultivos Óptimos:</span>
                     <span className="font-bold ml-2">{resultado.cluster.cultivos_optimos.join(', ')}</span>
                   </div>
