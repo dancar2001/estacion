@@ -107,10 +107,7 @@ if (typeof r.timestamp === 'string') {
   const soloFecha = r.timestamp.split(' ')[0]; // Quita la hora, deja "26/01/25"
   const partes = soloFecha.split('/');
   if (partes.length === 3) {
-    const dia = partes[0].padStart(2, '0');    // 26
-    const mes = partes[1].padStart(2, '0');    // 01
-    const año = '20' + partes[2];              // 2025
-    fecha = `${año}-${mes}-${dia}`;            // 2025-01-26
+fecha = r.timestamp;
   }
 }else if (typeof r.timestamp === 'number') {
               const ts = r.timestamp > 10000000000 ? r.timestamp / 1000 : r.timestamp;
