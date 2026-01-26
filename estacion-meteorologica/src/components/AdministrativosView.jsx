@@ -408,7 +408,7 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
         <table className="w-full border-collapse">
           <thead className="bg-gray-100">
             <tr>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
+              
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Username</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Email</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
@@ -420,7 +420,7 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
           <tbody className="divide-y divide-gray-200">
             {usuarios.map((usuario) => (
               <tr key={usuario.id} className="hover:bg-gray-50 transition">
-                <td className="px-4 py-3 text-sm text-gray-600">{usuario.id}</td>
+                
                 <td className="px-4 py-3 text-sm font-semibold text-gray-800">{usuario.username}</td>
                 <td className="px-4 py-3 text-sm text-gray-600">{usuario.email}</td>
                 <td className="px-4 py-3 text-sm text-gray-800">{usuario.first_name || '-'}</td>
