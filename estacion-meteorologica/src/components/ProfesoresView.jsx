@@ -12,7 +12,7 @@ import Papa from 'papaparse';
 const FIREBASE_URL = "https://bdclimatico-cdb27-default-rtdb.firebaseio.com/sensores.json";
 
 const ProfesoresView = ({ user, apiBaseUrl, onLogout }) => {
-  const [activeTab, setActiveTab] = useState('analisis');
+  const [activeTab, setActiveTab] = useState('resumen');
   
   // ⭐ Estados para datos COMBINADOS
   const [datos, setDatos] = useState([]);           // COMBINADOS (CSV + Firebase) - para PDF
@@ -102,14 +102,17 @@ if (keys.length > 0) {
           // ⭐ PARSEAR TIMESTAMP - puede ser número o string "YY/MM/DD"
           let fecha = new Date().toISOString().slice(0, 10);
           if (r.timestamp) {
-            if (typeof r.timestamp === 'string') {
-              // Formato "YY/MM/DD" o "25/12/11"
-              const partes = r.timestamp.split('/');
-              if (partes.length === 3) {
-                const año = partes[0].length === 2 ? '20' + partes[0] : partes[0];
-                fecha = `${año}-${partes[1].padStart(2, '0')}-${partes[2].padStart(2, '0')}`;
-              }
-            } else if (typeof r.timestamp === 'number') {
+if (typeof r.timestamp === 'string') {
+  // Formato "DD/MM/YY HH:MM" → "26/01/25 14:40"
+  const soloFecha = r.timestamp.split(' ')[0]; // Quita la hora, deja "26/01/25"
+  const partes = soloFecha.split('/');
+  if (partes.length === 3) {
+    const dia = partes[0].padStart(2, '0');    // 26
+    const mes = partes[1].padStart(2, '0');    // 01
+    const año = '20' + partes[2];              // 2025
+    fecha = `${año}-${mes}-${dia}`;            // 2025-01-26
+  }
+}else if (typeof r.timestamp === 'number') {
               const ts = r.timestamp > 10000000000 ? r.timestamp / 1000 : r.timestamp;
               fecha = new Date(ts * 1000).toISOString().slice(0, 10);
             }
@@ -546,7 +549,7 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
       {/* TABS */}
       <div className="bg-white rounded-xl shadow-lg p-4">
         <div className="flex gap-2 border-b overflow-x-auto">
-          {['datos', 'predictor', 'kmeans', 'resumen'].map((tab) => (
+          {['resumen','datos', 'predictor', 'kmeans'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
