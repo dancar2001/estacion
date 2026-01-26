@@ -778,7 +778,6 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
                     <tr className="bg-gray-100">
                       <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Cultivo</th>
                       <th className="border border-gray-300 px-4 py-3 text-center font-semibold">% Viabilidad</th>
-                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Días Viables</th>
                       <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Mejor Mes</th>
                     </tr>
                   </thead>
@@ -806,9 +805,7 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
                             {datosDashboardResumen.viabilidadCultivos[cultivo].porcentaje}%
                           </span>
                         </td>
-                        <td className="border border-gray-300 px-4 py-3 text-center font-semibold">
-                          {datosDashboardResumen.viabilidadCultivos[cultivo].dias}
-                        </td>
+
                         <td className="border border-gray-300 px-4 py-3 text-center">
                           <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">
                             {datosDashboardResumen.mejorMesPorCultivo[cultivo]}
@@ -819,26 +816,6 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
                   </tbody>
                 </table>
               </div>
-
-              {/* Leyenda de perfiles climáticos */}
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold text-gray-700 mb-3">📌 Perfiles Climáticos:</h4>
-                <div className="grid grid-cols-1 gap-2 text-sm">
-                  {datosDashboardResumen.datosPerfilClimatico.map((perfil, idx) => (
-                    <div key={perfil.name} className="flex items-center gap-2">
-                      <span 
-                        className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: COLORES_CLIMA[idx] }}
-                      ></span>
-                      <span className="font-medium">{perfil.name}:</span>
-                      <span>{perfil.value} días ({perfil.porcentaje}%)</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Insights adicionales */}
           <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white">
             <h3 className="text-xl font-bold mb-4">💡 Insights Clave</h3>
@@ -862,7 +839,7 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
                 </p>
               </div>
               <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
-                <p className="text-sm opacity-90">Total días analizados</p>
+                <p className="text-sm opacity-90">Total datos analizados</p>
                 <p className="text-2xl font-bold">{datosDashboardResumen.totalDias}</p>
                 <p className="text-sm">registros procesados</p>
               </div>
