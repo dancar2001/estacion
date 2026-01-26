@@ -556,7 +556,7 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              {tab === 'analisis' && '📊 Análisis'}
+             
               {tab === 'datos' && '📋 Datos'}
               {tab === 'predictor' && '🌾 Predictor'}
               {tab === 'viabilidad' && '🎯 Viabilidad'}
