@@ -546,7 +546,7 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
       {/* TABS */}
       <div className="bg-white rounded-xl shadow-lg p-4">
         <div className="flex gap-2 border-b overflow-x-auto">
-          {['analisis', 'datos', 'predictor', 'viabilidad', 'kmeans', 'resumen'].map((tab) => (
+          {['datos', 'predictor', 'viabilidad', 'kmeans', 'resumen'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -565,31 +565,6 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
           ))}
         </div>
       </div>
-
-      {/* TAB: ANÁLISIS */}
-      {activeTab === 'analisis' && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">📈 Tendencias (Últimos 30)</h3>
-            <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={datosGrafico}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="fecha" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="temp" stroke="#ef4444" name="Temp (°C)" strokeWidth={2} />
-                <Line type="monotone" dataKey="hum" stroke="#3b82f6" name="Humedad (%)" strokeWidth={2} />
-                <Line type="monotone" dataKey="precip" stroke="#06b6d4" name="Precip (mm)" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="grid md:grid-cols-1 gap-6">
-          
-          </div>
-        </div>
-      )}
 
       {/* TAB: DATOS */}
       {activeTab === 'datos' && (
