@@ -697,7 +697,7 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
             {/* Gráfico BARRAS - Total de Días Viables */}
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-                Total de Días Viables (de {datosDashboardResumen.totalDias} días)
+                Total de Datos Viables (de {datosDashboardResumen.totalDias} días)
               </h3>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={datosDashboardResumen.datosBarra}>
