@@ -816,6 +816,8 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
                   </tbody>
                 </table>
               </div>
+              </div>
+
           {/* Insights adicionales */}
           <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white">
             <h3 className="text-xl font-bold mb-4">💡 Insights Clave</h3>
