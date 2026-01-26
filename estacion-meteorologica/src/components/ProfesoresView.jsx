@@ -546,7 +546,7 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
       {/* TABS */}
       <div className="bg-white rounded-xl shadow-lg p-4">
         <div className="flex gap-2 border-b overflow-x-auto">
-          {['datos', 'predictor', 'viabilidad', 'kmeans', 'resumen'].map((tab) => (
+          {['datos', 'predictor', 'kmeans', 'resumen'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -558,7 +558,6 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
             >
               {tab === 'datos' && '📋 Datos'}
               {tab === 'predictor' && '🌾 Predictor'}
-              {tab === 'viabilidad' && '🎯 Viabilidad'}
               {tab === 'kmeans' && '📚 K-Means'}
               {tab === 'resumen' && '📈 Dashboard Resumen'}
             </button>
@@ -648,27 +647,7 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
   />
 )}
 
-      {/* TAB: VIABILIDAD */}
-      {activeTab === 'viabilidad' && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-2xl font-bold text-gray-800 mb-6">🌾 Viabilidad por Cultivo (CSV + Firebase)</h3>
-          <div className="grid md:grid-cols-5 gap-4">
-            {Object.entries(cultivosViables).map(([cultivo, dias]) => {
-              const porcentaje = ((dias / datos.length) * 100).toFixed(1);
-              return (
-                <div key={cultivo} className="bg-green-50 p-6 rounded-lg border-2 border-green-300">
-                  <h4 className="font-bold capitalize mb-3">{cultivo}</h4>
-                  <p className="text-3xl font-bold text-green-600">{dias}</p>
-                  <p className="text-xs text-gray-600">días viables ({porcentaje}%)</p>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: `${porcentaje}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+
 
       {/* TAB: K-MEANS */}
       {activeTab === 'kmeans' && (
