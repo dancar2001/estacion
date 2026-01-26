@@ -276,30 +276,7 @@ const DashboardProfesor = ({ mockHistoricalData, stats, ultimoRegistro, datos, u
 
   <div className="space-y-6">
     <div className="bg-white rounded-xl shadow-lg p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-        <BarChart3 className="text-blue-600" size={28} />
-        📈 Análisis de Datos Históricos (CSV + Firebase)
-      </h2>
 
-      {mockHistoricalData.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">
-            📊 Tendencias Climáticas
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={mockHistoricalData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="fecha" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="temp" stroke="#ef4444" name="Temperatura (°C)" strokeWidth={2} />
-              <Line type="monotone" dataKey="hum" stroke="#3b82f6" name="Humedad (%)" strokeWidth={2} />
-              <Line type="monotone" dataKey="precip" stroke="#06b6d4" name="Precipitación (mm)" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
 
       {stats && (
         <div className="grid md:grid-cols-1 gap-6">
