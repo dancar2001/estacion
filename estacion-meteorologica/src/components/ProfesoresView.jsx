@@ -556,7 +556,6 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-             
               {tab === 'datos' && '📋 Datos'}
               {tab === 'predictor' && '🌾 Predictor'}
               {tab === 'viabilidad' && '🎯 Viabilidad'}
@@ -587,23 +586,7 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
           </div>
 
           <div className="grid md:grid-cols-1 gap-6">
-            
-
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">📊 Cultivos Viables</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie data={datosporFuente} cx="50%" cy="50%" labelLine={false}
-                    label={({ name, value }) => `${name}: ${value}`}
-                    outerRadius={80} dataKey="value">
-                    {datosporFuente.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+          
           </div>
         </div>
       )}
