@@ -309,19 +309,6 @@ const PredictorCultivos = ({
                 </div>
               </div>
 
-              {/* ⭐ RESUMEN CONTEXTUAL MEJORADO */}
-              <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg">
-                <strong className="text-amber-800">📊 Resumen:</strong>
-                <pre className="mt-2 text-sm text-gray-700 whitespace-pre-wrap font-sans">
-                  {resultado.resumen}
-                </pre>
-              </div>
-
-              {/* Info técnica */}
-              <div className="text-xs text-gray-500 p-3 bg-gray-100 rounded-lg">
-                <p><strong>Distancia mínima al centroide:</strong> {resultado.distanciaMinima}</p>
-                <p><strong>Modelo:</strong> v{resultado.predicciones[0]?.modelo_version} | Datos: {resultado.cluster.tamaño_cluster} registros históricos</p>
-              </div>
             </div>
           )}
         </div>
