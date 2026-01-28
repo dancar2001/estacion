@@ -107,92 +107,6 @@ const PredictorCultivos = ({
 
   return (
     <div className="space-y-4">
-      
-      {/* ╔══════════════════════════════════════════════════════════════╗ */}
-      {/* ║ TARJETA RESUMEN RÁPIDO - SIEMPRE VISIBLE                     ║ */}
-      {/* ╚══════════════════════════════════════════════════════════════╝ */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          🌾 Predicción de Cultivos
-          <span className="text-sm font-normal text-gray-500">
-            (Modelo v{predicciones[0]?.modelo_version || '3.0'})
-          </span>
-        </h3>
-
-        {/* Condiciones actuales */}
-        <div className="grid grid-cols-3 gap-3 mb-4 p-3 bg-gray-50 rounded-lg text-sm">
-          <div className="text-center">
-            <span className="text-gray-500">🌡️ Temp</span>
-            <p className="font-bold text-red-600">{temperatura}°C</p>
-          </div>
-          <div className="text-center">
-            <span className="text-gray-500">💧 Humedad</span>
-            <p className="font-bold text-blue-600">{humedadRelativa}%</p>
-          </div>
-          <div className="text-center">
-            <span className="text-gray-500">🌧️ Lluvia</span>
-            <p className="font-bold text-cyan-600">{pluviometria} mm</p>
-          </div>
-        </div>
-
-        {/* Resumen de viabilidad */}
-        <div className="flex gap-4 mb-4">
-          <div className="flex-1 bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-            <p className="text-2xl font-bold text-green-600">{cultivosViables.length}</p>
-            <p className="text-sm text-green-700">Viables</p>
-          </div>
-          <div className="flex-1 bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-            <p className="text-2xl font-bold text-red-600">{cultivosNoViables.length}</p>
-            <p className="text-sm text-red-700">No Viables</p>
-          </div>
-        </div>
-
-        {/* Lista rápida de cultivos con confianza INDIVIDUAL */}
-        <div className="space-y-2">
-          {predicciones.map((pred) => (
-            <div
-              key={pred.cultivo}
-              className={`flex items-center justify-between p-3 rounded-lg border ${
-                pred.viabilidad 
-                  ? 'bg-green-50 border-green-200' 
-                  : 'bg-red-50 border-red-200'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-xl">{getEmojiCultivo(pred.cultivo)}</span>
-                <span className="font-medium">{pred.cultivo}</span>
-                {pred.es_optimo_en_cluster && (
-                  <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">
-                    ⭐ Óptimo
-                  </span>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-3">
-                {/* ⭐ Barra de confianza visual */}
-                <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ 
-                      width: `${pred.confianza}%`,
-                      backgroundColor: getColorConfianza(pred.confianza)
-                    }}
-                  />
-                </div>
-                
-                {/* ⭐ Badge con confianza INDIVIDUAL */}
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-bold text-white ${
-                    pred.viabilidad ? 'bg-green-500' : 'bg-red-500'
-                  }`}
-                >
-                  {pred.viabilidad ? '✅' : '❌'} {pred.confianza.toFixed(0)}%
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* ╔══════════════════════════════════════════════════════════════╗ */}
       {/* ║ PANEL EXPANDIBLE CON ANÁLISIS DETALLADO K-MEANS              ║ */}
@@ -263,11 +177,11 @@ const PredictorCultivos = ({
                           <div className="flex items-center gap-2">
                             <span className="text-xl">{getEmojiCultivo(pred.cultivo)}</span>
                             <strong className="text-lg">{pred.cultivo}</strong>
-                            {pred.es_optimo_en_cluster && (
-                              <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full font-bold">
-                                ⭐ Óptimo en este perfil
-                              </span>
-                            )}
+{pred.es_optimo_en_cluster && (
+  <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-bold">
+    ⭐ Óptimo en este perfil
+  </span>
+)}
                           </div>
                           
                           {/* ⭐ Mostrar razón si NO es viable */}
