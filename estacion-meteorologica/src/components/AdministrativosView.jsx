@@ -18,7 +18,58 @@ import AnalisisKMeans from './AnalisisKMeans';
 const FIREBASE_URL = "https://bdclimatico-cdb27-default-rtdb.firebaseio.com/sensores.json";
 
 // ============================================================================
-// MODAL EDITAR USUARIO (CON CÉDULA)
+// ⭐ FUNCIÓN DE VALIDACIÓN DE CÉDULA ECUATORIANA
+// ============================================================================
+const validarCedulaEcuador = (cedula) => {
+  // Verificar longitud y que solo contenga números
+  if (!cedula || cedula.length !== 10 || !/^\d+$/.test(cedula)) {
+    return { valida: false, mensaje: 'La cédula debe tener exactamente 10 dígitos numéricos' };
+  }
+
+  const provincia = parseInt(cedula.substring(0, 2), 10);
+  const tercerDigito = parseInt(cedula[2], 10);
+
+  // Validar provincia (01-24)
+  if (provincia < 1 || provincia > 24) {
+    return { valida: false, mensaje: 'Código de provincia inválido (debe ser 01-24)' };
+  }
+
+  // Validar tercer dígito (0-5 para cédulas normales)
+  if (tercerDigito < 0 || tercerDigito > 5) {
+    return { valida: false, mensaje: 'Tercer dígito inválido para cédula de persona natural' };
+  }
+
+  // Algoritmo de validación del dígito verificador
+  const coeficientes = [2, 1, 2, 1, 2, 1, 2, 1, 2];
+  let suma = 0;
+
+  for (let i = 0; i < 9; i++) {
+    let valor = parseInt(cedula[i], 10) * coeficientes[i];
+    if (valor >= 10) {
+      valor -= 9;
+    }
+    suma += valor;
+  }
+
+  const digitoVerificador = (10 - (suma % 10)) % 10;
+  const ultimoDigito = parseInt(cedula[9], 10);
+
+  if (digitoVerificador !== ultimoDigito) {
+    return { valida: false, mensaje: 'Dígito verificador inválido' };
+  }
+
+  return { valida: true, mensaje: 'Cédula válida' };
+};
+
+// ============================================================================
+// ⭐ FUNCIÓN PARA FILTRAR SOLO NÚMEROS EN INPUT
+// ============================================================================
+const soloNumeros = (valor) => {
+  return valor.replace(/\D/g, '').substring(0, 10);
+};
+
+// ============================================================================
+// MODAL EDITAR USUARIO (CON CÉDULA VALIDADA)
 // ============================================================================
 const ModalEditarUsuario = ({ usuario, onClose, onSave, loading }) => {
   const [form, setForm] = useState({
@@ -27,12 +78,41 @@ const ModalEditarUsuario = ({ usuario, onClose, onSave, loading }) => {
     rol: usuario.rol || "estudiante",
     cedula: usuario.cedula || "",
   });
+  const [errorCedula, setErrorCedula] = useState(null);
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    if (name === 'cedula') {
+      const valorFiltrado = soloNumeros(value);
+      setForm({ ...form, [name]: valorFiltrado });
+      
+      // Validar mientras escribe (solo si tiene 10 dígitos)
+      if (valorFiltrado.length === 10) {
+        const resultado = validarCedulaEcuador(valorFiltrado);
+        setErrorCedula(resultado.valida ? null : resultado.mensaje);
+      } else if (valorFiltrado.length > 0) {
+        setErrorCedula(`Faltan ${10 - valorFiltrado.length} dígitos`);
+      } else {
+        setErrorCedula(null);
+      }
+    } else {
+      setForm({ ...form, [name]: value });
+    }
+  };
 
-const handleSubmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validar cédula antes de guardar (si se ingresó una)
+    if (form.cedula && form.cedula.length > 0) {
+      const resultado = validarCedulaEcuador(form.cedula);
+      if (!resultado.valida) {
+        setErrorCedula(resultado.mensaje);
+        return;
+      }
+    }
+    
     onSave(usuario.id, form);
   };
 
@@ -74,19 +154,32 @@ const handleSubmit = (e) => {
             />
           </div>
 
-          {/* Cédula */}
+          {/* Cédula con validación */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Cédula de Identidad
+              Cédula de Identidad (Ecuador)
             </label>
             <input
               type="text"
               name="cedula"
               value={form.cedula}
               onChange={handleChange}
-              placeholder="1234567890"
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="0912345678"
+              maxLength={10}
+              className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 ${
+                errorCedula 
+                  ? 'border-red-500 focus:ring-red-500' 
+                  : form.cedula && form.cedula.length === 10
+                    ? 'border-green-500 focus:ring-green-500'
+                    : 'border-gray-300 focus:ring-blue-500'
+              }`}
             />
+            {errorCedula && (
+              <p className="text-red-500 text-xs mt-1">❌ {errorCedula}</p>
+            )}
+            {form.cedula && form.cedula.length === 10 && !errorCedula && (
+              <p className="text-green-500 text-xs mt-1">✅ Cédula válida</p>
+            )}
           </div>
 
           {/* Rol */}
@@ -109,7 +202,7 @@ const handleSubmit = (e) => {
           {/* Botones */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (form.cedula && form.cedula.length > 0 && errorCedula)}
             className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400 font-semibold transition"
           >
             {loading ? "Guardando..." : "✅ Guardar Cambios"}
@@ -131,7 +224,7 @@ const handleSubmit = (e) => {
 // COMPONENTES EXTRAÍDOS
 // ============================================================================
 
-const CrearUsuarioTab = ({ formData, handleInputChange, handleSubmit, loading, error, success }) => (
+const CrearUsuarioTab = ({ formData, handleInputChange, handleSubmit, loading, error, success, errorCedula }) => (
   <div className="bg-white rounded-xl shadow-lg p-6 max-w-2xl">
     <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
       <UserPlus className="text-blue-600" size={28} />
@@ -171,14 +264,32 @@ const CrearUsuarioTab = ({ formData, handleInputChange, handleSubmit, loading, e
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
-<input
-  type="text"
-  name="cedula"
-  placeholder="Cédula de Identidad"
-  value={formData.cedula}
-  onChange={handleInputChange}
-  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-/>
+
+        {/* Campo de cédula con validación visual */}
+        <div className="col-span-1">
+          <input
+            type="text"
+            name="cedula"
+            placeholder="Cédula de Identidad (Ecuador)"
+            value={formData.cedula}
+            onChange={handleInputChange}
+            maxLength={10}
+            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+              errorCedula 
+                ? 'border-red-500 focus:ring-red-500' 
+                : formData.cedula && formData.cedula.length === 10
+                  ? 'border-green-500 focus:ring-green-500'
+                  : 'border-gray-300 focus:ring-blue-500'
+            }`}
+          />
+          {errorCedula && (
+            <p className="text-red-500 text-xs mt-1">❌ {errorCedula}</p>
+          )}
+          {formData.cedula && formData.cedula.length === 10 && !errorCedula && (
+            <p className="text-green-500 text-xs mt-1">✅ Cédula válida</p>
+          )}
+        </div>
+
         <input
           type="password"
           name="password"
@@ -213,7 +324,7 @@ const CrearUsuarioTab = ({ formData, handleInputChange, handleSubmit, loading, e
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || (formData.cedula && formData.cedula.length > 0 && errorCedula)}
         className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold px-6 py-2 rounded-lg transition"
       >
         {loading ? 'Creando...' : '✅ Crear Usuario'}
@@ -221,11 +332,11 @@ const CrearUsuarioTab = ({ formData, handleInputChange, handleSubmit, loading, e
     </form>
   </div>
 );
+
 const DashboardEstudiante = ({ 
   ultimoRegistro, stats, datos, mockCropRecommendations, ultimoFirebase, datosCSV, datosFirebaseArray,
   prediccionesML, onPredicciones
 }) => (
-
   <div className="space-y-6">
     {/* ⭐ FIREBASE TIEMPO REAL */}
     {ultimoFirebase && (
@@ -264,66 +375,57 @@ const DashboardEstudiante = ({
         </div>
       </div>
     )}
-{(ultimoFirebase || ultimoRegistro) && (
-  <PredictorCultivos
-    temperatura={ultimoFirebase?.temperatura || ultimoRegistro?.temperatura || 0}
-    radiacion={ultimoFirebase ? (ultimoFirebase.uvIndex / 10) : (ultimoRegistro?.radiacion_solar || 0)}
-    humedadSuelo={ultimoFirebase?.humedad_suelo || ultimoRegistro?.humedad_suelo || 0}
-    humedadRelativa={ultimoFirebase?.humedad || ultimoRegistro?.humedad || 0}
-    pluviometria={ultimoFirebase ? (ultimoFirebase.lluvia / 10) : (ultimoRegistro?.precipitacion || 0)}
-    onPrediccionesChange={onPredicciones}
-  />
-)}
 
+    {(ultimoFirebase || ultimoRegistro) && (
+      <PredictorCultivos
+        temperatura={ultimoFirebase?.temperatura || ultimoRegistro?.temperatura || 0}
+        radiacion={ultimoFirebase ? (ultimoFirebase.uvIndex / 10) : (ultimoRegistro?.radiacion_solar || 0)}
+        humedadSuelo={ultimoFirebase?.humedad_suelo || ultimoRegistro?.humedad_suelo || 0}
+        humedadRelativa={ultimoFirebase?.humedad || ultimoRegistro?.humedad || 0}
+        pluviometria={ultimoFirebase ? (ultimoFirebase.lluvia / 10) : (ultimoRegistro?.precipitacion || 0)}
+        onPrediccionesChange={onPredicciones}
+      />
+    )}
 
     <div className="bg-white rounded-xl shadow-lg p-6">
       <h3 className="text-xl font-bold text-gray-800 mb-4">🌾 Recomendaciones de Cultivo</h3>
       <div className="grid md:grid-cols-2 gap-4">
-        {
-prediccionesML.map((crop, idx) => (
-  <div
-    key={idx}
-    className={`p-4 rounded-lg border-2 ${
-      crop.esViable ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'
-    }`}
-  >
-    <div className="flex justify-between items-center mb-2">
-      <h4 className="font-bold text-gray-800">{crop.nombre}</h4>
-      {crop.esViable && (
-        <span className="text-green-600 text-sm font-semibold">✓ ÓPTIMO</span>
-      )}
-    </div>
+        {prediccionesML.map((crop, idx) => (
+          <div
+            key={idx}
+            className={`p-4 rounded-lg border-2 ${
+              crop.esViable ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'
+            }`}
+          >
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="font-bold text-gray-800">{crop.nombre}</h4>
+              {crop.esViable && (
+                <span className="text-green-600 text-sm font-semibold">✓ ÓPTIMO</span>
+              )}
+            </div>
 
-    <div className="mb-2">
-      <div className="bg-gray-200 rounded-full h-3">
-        <div
-          className={`h-3 rounded-full ${crop.esViable ? 'bg-green-600' : 'bg-red-500'}`}
-          style={{ width: `${crop.viabilidad}%` }}
-        />
-      </div>
-    </div>
+            <div className="mb-2">
+              <div className="bg-gray-200 rounded-full h-3">
+                <div
+                  className={`h-3 rounded-full ${crop.esViable ? 'bg-green-600' : 'bg-red-500'}`}
+                  style={{ width: `${crop.viabilidad}%` }}
+                />
+              </div>
+            </div>
 
-    <p className="text-sm text-gray-600">Confianza: {crop.viabilidad}%</p>
-  </div>
-))
-
-        
-        
-        }
+            <p className="text-sm text-gray-600">Confianza: {crop.viabilidad}%</p>
+          </div>
+        ))}
       </div>
     </div>
   </div>
 );
+
 const DashboardProfesor = ({ mockHistoricalData, stats, ultimoRegistro, datos, ultimoFirebase, onPredicciones, prediccionesML }) => (
-
-
   <div className="space-y-6">
     <div className="bg-white rounded-xl shadow-lg p-6">
-
-
       {stats && (
         <div className="grid md:grid-cols-1 gap-6">
-
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">📊 Estadísticas</h3>
             <div className="space-y-4">
@@ -351,17 +453,16 @@ const DashboardProfesor = ({ mockHistoricalData, stats, ultimoRegistro, datos, u
       )}
     </div>
 
-{(ultimoFirebase || ultimoRegistro) && (
-  <PredictorCultivos
-    temperatura={ultimoFirebase?.temperatura || ultimoRegistro?.temperatura || 0}
-    radiacion={ultimoFirebase ? (ultimoFirebase.uvIndex / 10) : (ultimoRegistro?.radiacion_solar || 0)}
-    humedadSuelo={ultimoFirebase?.humedad_suelo || ultimoRegistro?.humedad_suelo || 0}
-    humedadRelativa={ultimoFirebase?.humedad || ultimoRegistro?.humedad || 0}
-    pluviometria={ultimoFirebase ? (ultimoFirebase.lluvia / 10) : (ultimoRegistro?.precipitacion || 0)}
-    onPrediccionesChange={onPredicciones}
-  />
-)}
-
+    {(ultimoFirebase || ultimoRegistro) && (
+      <PredictorCultivos
+        temperatura={ultimoFirebase?.temperatura || ultimoRegistro?.temperatura || 0}
+        radiacion={ultimoFirebase ? (ultimoFirebase.uvIndex / 10) : (ultimoRegistro?.radiacion_solar || 0)}
+        humedadSuelo={ultimoFirebase?.humedad_suelo || ultimoRegistro?.humedad_suelo || 0}
+        humedadRelativa={ultimoFirebase?.humedad || ultimoRegistro?.humedad || 0}
+        pluviometria={ultimoFirebase ? (ultimoFirebase.lluvia / 10) : (ultimoRegistro?.precipitacion || 0)}
+        onPrediccionesChange={onPredicciones}
+      />
+    )}
   </div>
 );
 
@@ -377,7 +478,7 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
   const handleGuardarEdicion = async (id, data) => {
     try {
       setEditando(true);
-     await axios.put(`${apiBaseUrl}/editar-usuario/${id}/`, data);
+      await axios.put(`${apiBaseUrl}/editar-usuario/${id}/`, data);
       setUsuarioEditar(null);
       if (onRefresh) await onRefresh();
       alert("✅ Usuario actualizado correctamente");
@@ -510,7 +611,6 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
 
 const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
   const [prediccionesML, setPrediccionesML] = useState([]);
-
   const [activeTab, setActiveTab] = useState('crear-usuario');
   const [usuarios, setUsuarios] = useState([]);
   
@@ -527,6 +627,9 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
   const [ultimoFirebase, setUltimoFirebase] = useState(null);
   const [loadingFirebase, setLoadingFirebase] = useState(false);
 
+  // ⭐ Estado para error de cédula
+  const [errorCedula, setErrorCedula] = useState(null);
+
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
@@ -536,43 +639,32 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
     rol: 'estudiante',
   });
 
-const handlePrediccionesActualizadas = useCallback((predicciones) => {
-  if (predicciones && predicciones.length > 0) {
+  const handlePrediccionesActualizadas = useCallback((predicciones) => {
+    if (predicciones && predicciones.length > 0) {
+      const formateadas = predicciones.map(pred => ({
+        nombre: pred.cultivo,
+        viabilidad: pred.confianza,
+        esViable: pred.viabilidad || pred.es_optimo_en_cluster,
+        esOptimoEnCluster: Boolean(pred.es_optimo_en_cluster)
+      }))
+      .sort((a, b) => {
+        if (a.esViable !== b.esViable) return a.esViable ? -1 : 1;
+        return b.viabilidad - a.viabilidad;
+      });
 
-    const formateadas = predicciones.map(pred => ({
-      nombre: pred.cultivo,
-      viabilidad: pred.confianza,
-      esViable: pred.viabilidad || pred.es_optimo_en_cluster,
-      esOptimoEnCluster: Boolean(pred.es_optimo_en_cluster)
-    }))
-    .sort((a, b) => {
-      if (a.esViable !== b.esViable) return a.esViable ? -1 : 1;
-      return b.viabilidad - a.viabilidad;
-    });
-
-    setPrediccionesML(formateadas);
-  }
-}, []);
-
+      setPrediccionesML(formateadas);
+    }
+  }, []);
 
   // ========================================================================
   // FUNCIÓN PARA CALCULAR VIABILIDAD
   // ========================================================================
   const calcularViabilidad = (temp, humedad, lluvia) => {
     return {
-      // Tomate: 20-32°C, humedad 50-85%, lluvia moderada
       tomate: (temp >= 20 && temp <= 32 && lluvia >= 1 && lluvia <= 15 && humedad >= 50 && humedad <= 85) ? 'Sí' : 'No',
-      
-      // Banana: 20-32°C, lluvia moderada-alta
       banana: (temp >= 20 && temp <= 32 && lluvia >= 2 && lluvia <= 35) ? 'Sí' : 'No',
-      
-      // Cacao: 21-32°C, lluvia < 45mm (muy tolerante)
       cacao: (temp >= 21 && temp <= 32 && lluvia < 45) ? 'Sí' : 'No',
-      
-      // Arroz: 22-32°C, necesita más agua
       arroz: (temp >= 22 && temp <= 32 && lluvia >= 2 && lluvia <= 30) ? 'Sí' : 'No',
-      
-      // Maíz: 20-32°C, lluvia moderada
       maiz: (temp >= 20 && temp <= 32 && lluvia >= 1 && lluvia <= 20) ? 'Sí' : 'No',
     };
   };
@@ -592,28 +684,24 @@ const handlePrediccionesActualizadas = useCallback((predicciones) => {
           ...value
         }));
 
-const registrosObj = data;
+        const registrosObj = data;
+        const keys = Object.keys(registrosObj);
 
-// Obtener última key insertada (Firebase las ordena por tiempo)
-const keys = Object.keys(registrosObj);
+        if (keys.length > 0) {
+          const lastKey = keys[keys.length - 1];
+          const ultimo = registrosObj[lastKey];
 
-if (keys.length > 0) {
-  const lastKey = keys[keys.length - 1];
-  const ultimo = registrosObj[lastKey];
+          setUltimoFirebase({
+            temperatura: ultimo.temperatura || 0,
+            humedad: ultimo.humedad || 0,
+            humedad_suelo: ultimo.humedad_suelo || 0,
+            lluvia: ultimo.lluvia < 0 ? 0 : ultimo.lluvia || 0,
+            uvIndex: ultimo.uvIndex || 0,
+            timestamp: ultimo.timestamp || '',
+            totalRegistros: keys.length
+          });
+        }
 
-  setUltimoFirebase({
-    temperatura: ultimo.temperatura || 0,
-    humedad: ultimo.humedad || 0,
-    humedad_suelo: ultimo.humedad_suelo || 0,
-    lluvia: ultimo.lluvia < 0 ? 0 : ultimo.lluvia || 0,
-    uvIndex: ultimo.uvIndex || 0,
-    timestamp: ultimo.timestamp || '',
-    totalRegistros: keys.length
-  });
-}
-
-
-        // ⭐ CONVERTIR Firebase al formato del CSV
         const firebaseComoCSV = registros.map((r) => {
           const temp = r.temperatura || 0;
           const humedad = r.humedad || 0;
@@ -621,7 +709,6 @@ if (keys.length > 0) {
           const lluvia = r.lluvia < 0 ? 0 : r.lluvia || 0;
           const uvIndex = r.uvIndex || 0;
           
-          // ⭐ PARSEAR TIMESTAMP - puede ser número o string "YY/MM/DD"
           let fecha = new Date().toISOString().slice(0, 10);
           if (r.timestamp) {
             if (typeof r.timestamp === 'string') {
@@ -636,13 +723,12 @@ if (keys.length > 0) {
             }
           }
 
-
           const viabilidad = calcularViabilidad(temp, humedad, lluvia/10);
 
           return {
             date: fecha,
             temperatura: temp,
-            radiacion_solar:uvIndex,
+            radiacion_solar: uvIndex,
             humedad_suelo: humedadSuelo,
             humedad: humedad,
             precipitacion: lluvia,
@@ -703,7 +789,6 @@ if (keys.length > 0) {
             fuente: 'csv'
           }));
           setDatosCSV(datosParseados);
-
         },
         error: (error) => {
           console.error('❌ Error parsing CSV:', error);
@@ -739,11 +824,33 @@ if (keys.length > 0) {
     return () => clearInterval(intervalFirebase);
   }, [fetchFirebase]);
 
+  // ========================================================================
+  // ⭐ HANDLE INPUT CHANGE CON VALIDACIÓN DE CÉDULA
+  // ========================================================================
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    
+    if (name === 'cedula') {
+      const valorFiltrado = soloNumeros(value);
+      setFormData({ ...formData, [name]: valorFiltrado });
+      
+      // Validar mientras escribe
+      if (valorFiltrado.length === 10) {
+        const resultado = validarCedulaEcuador(valorFiltrado);
+        setErrorCedula(resultado.valida ? null : resultado.mensaje);
+      } else if (valorFiltrado.length > 0) {
+        setErrorCedula(`Faltan ${10 - valorFiltrado.length} dígitos`);
+      } else {
+        setErrorCedula(null);
+      }
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
+  // ========================================================================
+  // ⭐ HANDLE SUBMIT CON VALIDACIÓN DE CÉDULA
+  // ========================================================================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -763,7 +870,16 @@ if (keys.length > 0) {
       setError('La contraseña debe tener mínimo 8 caracteres');
       return;
     }
-    // ⭐ AGREGA ESTO:
+
+    // ⭐ Validar cédula si se ingresó
+    if (formData.cedula && formData.cedula.length > 0) {
+      const resultado = validarCedulaEcuador(formData.cedula);
+      if (!resultado.valida) {
+        setError(`Cédula inválida: ${resultado.mensaje}`);
+        return;
+      }
+    }
+
     console.log('📤 Datos que se envían:', {
       nombre: formData.nombre,
       email: formData.email,
@@ -771,6 +887,7 @@ if (keys.length > 0) {
       password: formData.password,
       rol: formData.rol,
     });
+
     try {
       setLoading(true);
       const response = await axios.post(`${apiBaseUrl}/crear-usuario/`, {
@@ -791,6 +908,7 @@ if (keys.length > 0) {
         password_confirm: '',
         rol: 'estudiante',
       });
+      setErrorCedula(null);
 
       await fetchUsuarios();
       setTimeout(() => setActiveTab('usuarios'), 2000);
@@ -904,22 +1022,23 @@ if (keys.length > 0) {
           loading={loading}
           error={error}
           success={success}
+          errorCedula={errorCedula}
         />
       )}
       
-{activeTab === 'dashboard' && (
-  <DashboardEstudiante 
-    ultimoRegistro={ultimoRegistro}
-    stats={stats}
-    datos={datos}
-    mockCropRecommendations={mockCropRecommendations}
-    ultimoFirebase={ultimoFirebase}
-    datosCSV={datosCSV}
-    datosFirebaseArray={datosFirebaseArray}
-    prediccionesML={prediccionesML}
-    onPredicciones={handlePrediccionesActualizadas}
-  />
-)}
+      {activeTab === 'dashboard' && (
+        <DashboardEstudiante 
+          ultimoRegistro={ultimoRegistro}
+          stats={stats}
+          datos={datos}
+          mockCropRecommendations={mockCropRecommendations}
+          ultimoFirebase={ultimoFirebase}
+          datosCSV={datosCSV}
+          datosFirebaseArray={datosFirebaseArray}
+          prediccionesML={prediccionesML}
+          onPredicciones={handlePrediccionesActualizadas}
+        />
+      )}
 
       {activeTab === 'analisis' && (
         <DashboardProfesor 
@@ -939,8 +1058,8 @@ if (keys.length > 0) {
           variante="profesor"
           imagenClusters="/centroides.png"
           imagenCodo="/codo.png"
-            ultimoFirebase={ultimoFirebase}
-  ultimoRegistro={ultimoRegistro}
+          ultimoFirebase={ultimoFirebase}
+          ultimoRegistro={ultimoRegistro}
         />
       )}
       
