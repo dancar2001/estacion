@@ -31,15 +31,8 @@ const ModalEditarUsuario = ({ usuario, onClose, onSave, loading }) => {
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Validar que la cédula no esté vacía si es requerida
-    if (!form.cedula.trim()) {
-      alert("La cédula es requerida");
-      return;
-    }
-    
     onSave(usuario.id, form);
   };
 
@@ -93,7 +86,6 @@ const ModalEditarUsuario = ({ usuario, onClose, onSave, loading }) => {
               onChange={handleChange}
               placeholder="1234567890"
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
             />
           </div>
 
@@ -182,7 +174,7 @@ const CrearUsuarioTab = ({ formData, handleInputChange, handleSubmit, loading, e
 <input
   type="text"
   name="cedula"
-  placeholder="Cédula de Identidad (Opcional)"
+  placeholder="Cédula de Identidad"
   value={formData.cedula}
   onChange={handleInputChange}
   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
