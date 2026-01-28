@@ -377,7 +377,7 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
   const handleGuardarEdicion = async (id, data) => {
     try {
       setEditando(true);
-      await axios.put(`${apiBaseUrl}/usuarios/${id}/`, data);
+     await axios.put(`${apiBaseUrl}/editar-usuario/${id}/`, data);
       setUsuarioEditar(null);
       if (onRefresh) await onRefresh();
       alert("✅ Usuario actualizado correctamente");
