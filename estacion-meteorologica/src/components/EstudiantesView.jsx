@@ -304,4 +304,58 @@ const EstudiantesView = ({ user, apiBaseUrl, onLogout }) => {
             <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Thermometer size={20} />
-                <span clas
+                <span className="text-sm">Temperatura</span>
+              </div>
+              <p className="text-3xl font-bold">{ultimoFirebase.temperatura}°C</p>
+            </div>
+
+            <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Droplets size={20} />
+                <span className="text-sm">Humedad</span>
+              </div>
+              <p className="text-3xl font-bold">{ultimoFirebase.humedad}%</p>
+            </div>
+
+            <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Activity size={20} />
+                <span className="text-sm">Hum. Suelo</span>
+              </div>
+              <p className="text-3xl font-bold">{ultimoFirebase.humedad_suelo}%</p>
+            </div>
+
+            <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <CloudRain size={20} />
+                <span className="text-sm">Lluvia</span>
+              </div>
+              <p className="text-3xl font-bold">{(ultimoFirebase.lluvia / 10).toFixed(2)} mm</p>
+            </div>
+
+            <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Sun size={20} />
+                <span className="text-sm">UV Index</span>
+              </div>
+              <p className="text-3xl font-bold">{(ultimoFirebase.uvIndex / 10).toFixed(2)}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PREDICTOR */}
+      {(ultimoFirebase || ultimoRegistro) && (
+        <PredictorCultivos
+          temperatura={ultimoFirebase?.temperatura || ultimoRegistro?.temperatura || 0}
+          radiacion={ultimoFirebase ? (ultimoFirebase.uvIndex / 10) : (ultimoRegistro?.radiacion_solar || 0)}
+          humedadSuelo={ultimoFirebase?.humedad_suelo || ultimoRegistro?.humedad_suelo || 0}
+          humedadRelativa={ultimoFirebase?.humedad || ultimoRegistro?.humedad || 0}
+          pluviometria={ultimoFirebase ? (ultimoFirebase.lluvia / 10) : (ultimoRegistro?.precipitacion || 0)}
+        />
+      )}
+    </div>
+  );
+};
+
+export default EstudiantesView;
