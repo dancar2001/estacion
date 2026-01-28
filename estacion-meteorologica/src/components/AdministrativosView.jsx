@@ -18,13 +18,14 @@ import AnalisisKMeans from './AnalisisKMeans';
 const FIREBASE_URL = "https://bdclimatico-cdb27-default-rtdb.firebaseio.com/sensores.json";
 
 // ============================================================================
-// MODAL EDITAR USUARIO
+// MODAL EDITAR USUARIO (CON CÉDULA)
 // ============================================================================
 const ModalEditarUsuario = ({ usuario, onClose, onSave, loading }) => {
   const [form, setForm] = useState({
     first_name: usuario.first_name || "",
     email: usuario.email || "",
     rol: usuario.rol || "estudiante",
+    cedula: usuario.cedula || "",
   });
 
   const handleChange = (e) =>
@@ -32,56 +33,100 @@ const ModalEditarUsuario = ({ usuario, onClose, onSave, loading }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validar que la cédula no esté vacía si es requerida
+    if (!form.cedula.trim()) {
+      alert("La cédula es requerida");
+      return;
+    }
+    
     onSave(usuario.id, form);
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-xl w-96 shadow-lg">
-        <h2 className="text-xl font-bold mb-4">Editar Usuario</h2>
+        <h2 className="text-xl font-bold mb-4">✏️ Editar Usuario</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            type="text"
-            name="first_name"
-            value={form.first_name}
-            onChange={handleChange}
-            placeholder="Nombre"
-            className="w-full px-3 py-2 border rounded"
-          />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Nombre */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Nombre Completo
+            </label>
+            <input
+              type="text"
+              name="first_name"
+              value={form.first_name}
+              onChange={handleChange}
+              placeholder="Nombre"
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
 
-          <input
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            placeholder="Correo"
-            className="w-full px-3 py-2 border rounded"
-          />
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Correo Electrónico
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="correo@ejemplo.com"
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
 
-          <select
-            name="rol"
-            value={form.rol}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded"
-          >
-            <option value="estudiante">Estudiante</option>
-            <option value="profesor">Profesor</option>
-            <option value="administrativo">Administrativo</option>
-          </select>
+          {/* Cédula */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Cédula de Identidad
+            </label>
+            <input
+              type="text"
+              name="cedula"
+              value={form.cedula}
+              onChange={handleChange}
+              placeholder="1234567890"
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
 
+          {/* Rol */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Rol
+            </label>
+            <select
+              name="rol"
+              value={form.rol}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="estudiante">Estudiante</option>
+              <option value="profesor">Profesor</option>
+              <option value="administrativo">Administrativo</option>
+            </select>
+          </div>
+
+          {/* Botones */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400 font-semibold transition"
           >
-            {loading ? "Guardando..." : "Guardar Cambios"}
+            {loading ? "Guardando..." : "✅ Guardar Cambios"}
           </button>
         </form>
 
         <button
           onClick={onClose}
-          className="w-full mt-3 text-gray-600 underline"
+          className="w-full mt-3 text-gray-600 hover:text-gray-800 underline"
         >
           Cancelar
         </button>
@@ -89,7 +134,6 @@ const ModalEditarUsuario = ({ usuario, onClose, onSave, loading }) => {
     </div>
   );
 };
-
 
 // ============================================================================
 // COMPONENTES EXTRAÍDOS
@@ -135,7 +179,14 @@ const CrearUsuarioTab = ({ formData, handleInputChange, handleSubmit, loading, e
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
-
+<input
+  type="text"
+  name="cedula"
+  placeholder="Cédula de Identidad (Opcional)"
+  value={formData.cedula}
+  onChange={handleInputChange}
+  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+/>
         <input
           type="password"
           name="password"
@@ -322,6 +373,9 @@ const DashboardProfesor = ({ mockHistoricalData, stats, ultimoRegistro, datos, u
   </div>
 );
 
+// ============================================================================
+// TABLA DE USUARIOS CON CÉDULA
+// ============================================================================
 const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
   const [eliminando, setEliminando] = useState(false);
   const [mensajeEliminar, setMensajeEliminar] = useState(null);
@@ -331,12 +385,12 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
   const handleGuardarEdicion = async (id, data) => {
     try {
       setEditando(true);
-      await axios.put(`${apiBaseUrl}/usuarios/${id}/editar/`, data);
+      await axios.put(`${apiBaseUrl}/usuarios/${id}/`, data);
       setUsuarioEditar(null);
       if (onRefresh) await onRefresh();
-      alert("Usuario actualizado correctamente");
+      alert("✅ Usuario actualizado correctamente");
     } catch (err) {
-      alert("Error al actualizar usuario");
+      alert("❌ Error al actualizar usuario: " + (err.response?.data?.error || err.message));
     } finally {
       setEditando(false);
     }
@@ -385,10 +439,10 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
         <table className="w-full border-collapse">
           <thead className="bg-gray-100">
             <tr>
-              
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Username</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Email</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Cédula</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Rol</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Creado</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Acciones</th>
@@ -397,10 +451,16 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
           <tbody className="divide-y divide-gray-200">
             {usuarios.map((usuario) => (
               <tr key={usuario.id} className="hover:bg-gray-50 transition">
-                
                 <td className="px-4 py-3 text-sm font-semibold text-gray-800">{usuario.username}</td>
                 <td className="px-4 py-3 text-sm text-gray-600">{usuario.email}</td>
                 <td className="px-4 py-3 text-sm text-gray-800">{usuario.first_name || '-'}</td>
+                <td className="px-4 py-3 text-sm text-gray-600 font-mono">
+                  {usuario.cedula ? (
+                    <span className="bg-blue-50 px-2 py-1 rounded">{usuario.cedula}</span>
+                  ) : (
+                    <span className="text-gray-400">Sin registrar</span>
+                  )}
+                </td>
                 <td className="px-4 py-3">
                   <span className={`px-3 py-1 rounded text-xs font-semibold ${
                     usuario.rol_display === 'Administrativo'
@@ -415,12 +475,12 @@ const GestionUsuarios = ({ usuarios, apiBaseUrl, onRefresh }) => {
                 <td className="px-4 py-3 text-sm text-gray-600">
                   {new Date(usuario.created_at).toLocaleDateString('es-ES')}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 flex gap-2">
                   <button
                     onClick={() => setUsuarioEditar(usuario)}
-                    className="px-3 py-1 bg-yellow-500 text-white rounded mr-2 hover:bg-yellow-600"
+                    className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-xs font-semibold transition"
                   >
-                    Editar
+                    ✏️ Editar
                   </button>
                   <button
                     onClick={() => handleEliminarUsuario(usuario.id, usuario.first_name || usuario.username)}
@@ -478,6 +538,7 @@ const AdministrativosView = ({ user, apiBaseUrl, onLogout }) => {
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
+    cedula: '',
     password: '',
     password_confirm: '',
     rol: 'estudiante',
@@ -710,13 +771,22 @@ if (keys.length > 0) {
       setError('La contraseña debe tener mínimo 8 caracteres');
       return;
     }
-
+    // ⭐ AGREGA ESTO:
+    console.log('📤 Datos que se envían:', {
+      nombre: formData.nombre,
+      email: formData.email,
+      cedula: formData.cedula,
+      password: formData.password,
+      rol: formData.rol,
+    });
     try {
       setLoading(true);
       const response = await axios.post(`${apiBaseUrl}/crear-usuario/`, {
         nombre: formData.nombre,
         email: formData.email,
+        cedula: formData.cedula,
         password: formData.password,
+        password_confirm: formData.password_confirm,
         rol: formData.rol,
       });
 
@@ -724,6 +794,7 @@ if (keys.length > 0) {
       setFormData({
         nombre: '',
         email: '',
+        cedula: '',
         password: '',
         password_confirm: '',
         rol: 'estudiante',
