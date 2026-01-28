@@ -23,9 +23,6 @@ const EstudiantesView = ({ user, apiBaseUrl, onLogout }) => {
   const [loadingFirebase, setLoadingFirebase] = useState(false);
   const [errorFirebase, setErrorFirebase] = useState(null);
 
-  // ⭐ Estado para recibir predicciones desde PredictorCultivos
-  const [prediccionesML, setPrediccionesML] = useState([]);
-
   // ========================================================================
   // FUNCIÓN PARA CALCULAR VIABILIDAD DE CULTIVOS
   // ========================================================================
@@ -49,26 +46,6 @@ const EstudiantesView = ({ user, apiBaseUrl, onLogout }) => {
   };
 
   // ========================================================================
-  // ⭐ CALLBACK PARA RECIBIR PREDICCIONES DESDE PredictorCultivos
-  // ========================================================================
-  const handlePrediccionesActualizadas = useCallback((predicciones) => {
-    if (predicciones && predicciones.length > 0) {
-const formateadas = predicciones.map(pred => ({
-  nombre: pred.cultivo,
-  viabilidad: pred.confianza,
-  esViable: pred.viabilidad || pred.es_optimo_en_cluster,  
-  esOptimoEnCluster: Boolean(pred.es_optimo_en_cluster)              
-}))
-.sort((a, b) => {
-        if (a.esViable !== b.esViable) return a.esViable ? -1 : 1;
-        return b.viabilidad - a.viabilidad;
-      });
-      
-      setPrediccionesML(formateadas);
-    }
-  }, []);
-
-  // ========================================================================
   // CARGAR DATOS DE FIREBASE
   // ========================================================================
   const fetchFirebase = useCallback(async () => {
@@ -85,26 +62,25 @@ const formateadas = predicciones.map(pred => ({
           ...value
         }));
 
-const registrosObj = data;
+        const registrosObj = data;
 
-// Obtener última key insertada (Firebase las ordena por tiempo)
-const keys = Object.keys(registrosObj);
+        // Obtener última key insertada (Firebase las ordena por tiempo)
+        const keys = Object.keys(registrosObj);
 
-if (keys.length > 0) {
-  const lastKey = keys[keys.length - 1];
-  const ultimo = registrosObj[lastKey];
+        if (keys.length > 0) {
+          const lastKey = keys[keys.length - 1];
+          const ultimo = registrosObj[lastKey];
 
-  setUltimoFirebase({
-    temperatura: ultimo.temperatura || 0,
-    humedad: ultimo.humedad || 0,
-    humedad_suelo: ultimo.humedad_suelo || 0,
-    lluvia: ultimo.lluvia < 0 ? 0 : ultimo.lluvia || 0,
-    uvIndex: ultimo.uvIndex || 0,
-    timestamp: ultimo.timestamp || '',
-    totalRegistros: keys.length
-  });
-}
-
+          setUltimoFirebase({
+            temperatura: ultimo.temperatura || 0,
+            humedad: ultimo.humedad || 0,
+            humedad_suelo: ultimo.humedad_suelo || 0,
+            lluvia: ultimo.lluvia < 0 ? 0 : ultimo.lluvia || 0,
+            uvIndex: ultimo.uvIndex || 0,
+            timestamp: ultimo.timestamp || '',
+            totalRegistros: keys.length
+          });
+        }
 
         const firebaseComoCSV = registros.map((r) => {
           const temp = r.temperatura || 0;
@@ -113,7 +89,7 @@ if (keys.length > 0) {
           const lluvia = r.lluvia < 0 ? 0 : r.lluvia || 0;
           const uvIndex = r.uvIndex || 0;
           
-          // Parseo de fecha (SIN CAMBIOS)
+          // Parseo de fecha
           let fecha = new Date().toISOString().slice(0, 10);
           if (r.timestamp) {
             if (typeof r.timestamp === 'string') {
@@ -128,13 +104,12 @@ if (keys.length > 0) {
             }
           }
 
-          // ⭐ CORREGIDO: Usar valores reales divididos entre 10
           const viabilidad = calcularViabilidad(temp, humedad, lluvia / 10);
 
           return {
             date: fecha,
             temperatura: temp,
-            radiacion_solar: uvIndex ,
+            radiacion_solar: uvIndex,
             humedad_suelo: humedadSuelo,
             humedad: humedad,
             precipitacion: lluvia,
@@ -329,131 +304,4 @@ if (keys.length > 0) {
             <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Thermometer size={20} />
-                <span className="text-sm">Temperatura</span>
-              </div>
-              <p className="text-3xl font-bold">{ultimoFirebase.temperatura}°C</p>
-            </div>
-
-            <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Droplets size={20} />
-                <span className="text-sm">Humedad</span>
-              </div>
-              <p className="text-3xl font-bold">{ultimoFirebase.humedad}%</p>
-            </div>
-
-            <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Activity size={20} />
-                <span className="text-sm">Hum. Suelo</span>
-              </div>
-              <p className="text-3xl font-bold">{ultimoFirebase.humedad_suelo}%</p>
-            </div>
-
-            <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <CloudRain size={20} />
-                <span className="text-sm">Lluvia</span>
-              </div>
-              <p className="text-3xl font-bold">{(ultimoFirebase.lluvia / 10).toFixed(2)} mm</p>
-            </div>
-
-            <div className="bg-white/20 backdrop-blur p-4 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Sun size={20} />
-                <span className="text-sm">UV Index</span>
-              </div>
-              <p className="text-3xl font-bold">{(ultimoFirebase.uvIndex / 10).toFixed(2)}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-
-      {/* PREDICTOR - ⭐ CORREGIDO: Usar valores reales */}
-      {(ultimoFirebase || ultimoRegistro) && (
-        <PredictorCultivos
-          temperatura={ultimoFirebase?.temperatura || ultimoRegistro?.temperatura || 0}
-          radiacion={ultimoFirebase ? (ultimoFirebase.uvIndex / 10) : (ultimoRegistro?.radiacion_solar || 0)}
-          humedadSuelo={ultimoFirebase?.humedad_suelo || ultimoRegistro?.humedad_suelo || 0}
-          humedadRelativa={ultimoFirebase?.humedad || ultimoRegistro?.humedad || 0}
-          pluviometria={ultimoFirebase ? (ultimoFirebase.lluvia / 10) : (ultimoRegistro?.precipitacion || 0)}
-          onPrediccionesChange={handlePrediccionesActualizadas}
-        />
-      )}
-
-      {/* ⭐ CULTIVOS VIABLES HOY - USA DATOS DEL MODELO K-MEANS */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          🌾 Cultivos Viables Hoy
-          <span className="text-sm font-normal text-gray-500">(Modelo K-Means)</span>
-        </h3>
-        
-        {prediccionesML.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {prediccionesML.map((cultivo, idx) => (
-              <div
-                key={idx}
-  className={`p-4 rounded-lg border-2 ${
-    (cultivo.esViable || cultivo.esOptimoEnCluster)
-      ? 'bg-green-50 border-green-300'
-      : 'bg-red-50 border-red-300'
-  }`}
->
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-bold text-gray-800 flex items-center gap-2">
-                    {cultivo.nombre}
-                    {cultivo.esOptimoEnCluster && (
-                      <span className="text-yellow-500" title="Óptimo en este perfil climático"></span>
-                    )}
-                  </h4>
-{(cultivo.esViable || cultivo.esOptimoEnCluster) ? (
-  <span className="text-green-600 text-sm font-semibold">✓ VIABLE</span>
-) : (
-  <span className="text-red-600 text-sm font-semibold">✗ NO VIABLE</span>
-)}
-
-                </div>
-                <div className="bg-gray-200 rounded-full h-3 mb-2">
-                  <div
-className={`h-3 rounded-full ${
-  (cultivo.esViable || cultivo.esOptimoEnCluster) ? 'bg-green-600' : 'bg-red-400'
-}`}
-
-                    style={{ width: `${cultivo.viabilidad}%` }}
-                  />
-                </div>
-                <p className="text-sm text-gray-600">
-                  Confianza: <span className="font-semibold">{cultivo.viabilidad}%</span>
-                </p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mb-2"></div>
-            <p>Cargando predicciones...</p>
-          </div>
-        )}
-
-        {/* Leyenda */}
-        {prediccionesML.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-200 flex flex-wrap gap-4 text-xs text-gray-500">
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 bg-green-500 rounded"></span> Viable
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 bg-red-400 rounded"></span> No viable
-            </span>
-            <span className="flex items-center gap-1">
-              ⭐ Óptimo en perfil climático actual
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default EstudiantesView;
+                <span clas
