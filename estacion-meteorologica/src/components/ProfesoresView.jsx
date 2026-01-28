@@ -216,22 +216,31 @@ fecha = r.timestamp;
   // ========================================================================
   // ESTADÍSTICAS
   // ========================================================================
-  const calcularEstadisticas = () => {
-    if (datos.length === 0) return null;
+const calcularEstadisticas = () => {
+  if (datos.length === 0) return null;
 
-    const temps = datos.map((d) => d.temperatura);
-    const humeds = datos.map((d) => d.humedad);
-    const radiaciones = datos.map((d) => d.radiacion_solar);
+  const temps = datos.map((d) => d.temperatura);
+  const humeds = datos.map((d) => d.humedad);
+  const radiaciones = datos.map((d) => d.radiacion_solar);
+  const precipitaciones = datos.map((d) => d.precipitacion);
 
-    return {
-      totalRegistros: datos.length,
-      tempPromedio: (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(2),
-      humedadPromedio: (humeds.reduce((a, b) => a + b, 0) / humeds.length).toFixed(2),
-      radiacionPromedio: (radiaciones.reduce((a, b) => a + b, 0) / radiaciones.length).toFixed(0),
-      tempMax: Math.max(...temps).toFixed(2),
-      humedadMax: Math.max(...humeds).toFixed(2),
-    };
+  return {
+    totalRegistros: datos.length,
+    tempPromedio: (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(2),
+    tempMax: Math.max(...temps).toFixed(2),
+    tempMin: Math.min(...temps).toFixed(2),
+    humedadPromedio: (humeds.reduce((a, b) => a + b, 0) / humeds.length).toFixed(2),
+    humedadMax: Math.max(...humeds).toFixed(2),
+    humedadMin: Math.min(...humeds).toFixed(2),
+    radiacionPromedio: (radiaciones.reduce((a, b) => a + b, 0) / radiaciones.length).toFixed(1),
+    radiacionMax: Math.max(...radiaciones).toFixed(1),
+    radiacionMin: Math.min(...radiaciones).toFixed(1),
+    precipitacionTotal: precipitaciones.reduce((a, b) => a + b, 0).toFixed(1),
+    precipitacionPromedio: (precipitaciones.reduce((a, b) => a + b, 0) / precipitaciones.length).toFixed(1),
+    precipitacionMax: Math.max(...precipitaciones).toFixed(1),
+    precipitacionMin: Math.min(...precipitaciones).toFixed(1),
   };
+};
 
   const stats = calcularEstadisticas();
 
@@ -516,31 +525,118 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
         </div>
       )}
 
-      {/* ESTADÍSTICAS */}
-      {stats && (
-        <div className="grid md:grid-cols-5 gap-4">
-          <div className="bg-blue-100 rounded-xl shadow-lg p-4">
-            <p className="text-sm text-gray-700">Total Registros</p>
-            <p className="text-3xl font-bold text-blue-600">{stats.totalRegistros}</p>
-          </div>
-          <div className="bg-red-100 rounded-xl shadow-lg p-4">
-            <p className="text-sm text-gray-700">Temp Promedio</p>
-            <p className="text-3xl font-bold text-red-600">{stats.tempPromedio}°C</p>
-          </div>
-          <div className="bg-purple-100 rounded-xl shadow-lg p-4">
-            <p className="text-sm text-gray-700">Humedad Prom</p>
-            <p className="text-3xl font-bold text-purple-600">{stats.humedadPromedio}%</p>
-          </div>
-          <div className="bg-yellow-100 rounded-xl shadow-lg p-4">
-            <p className="text-sm text-gray-700">Radiación Prom</p>
-            <p className="text-3xl font-bold text-yellow-600">{stats.radiacionPromedio} W/m²</p>
-          </div>
-          <div className="bg-green-100 rounded-xl shadow-lg p-4">
-            <p className="text-sm text-gray-700">Cacao Viable</p>
-            <p className="text-3xl font-bold text-green-600">{cultivosViables.cacao} días</p>
-          </div>
+{/* ESTADÍSTICAS */}
+{stats && (
+  <div className="grid md:grid-cols-3 gap-6">
+    {/* TOTAL REGISTROS */}
+    <div className="bg-blue-100 rounded-xl shadow-lg p-6">
+      <h3 className="text-lg font-bold text-blue-600 mb-4">📊 Total Registros</h3>
+      <p className="text-4xl font-bold text-blue-600 mb-4">{stats.totalRegistros}</p>
+      <div className="space-y-2 text-sm text-gray-700">
+        <div className="flex justify-between">
+          <span>Datos procesados:</span>
+          <span className="font-semibold">{stats.totalRegistros}</span>
         </div>
-      )}
+      </div>
+    </div>
+
+    {/* TEMPERATURA */}
+    <div className="bg-red-100 rounded-xl shadow-lg p-6">
+      <h3 className="text-lg font-bold text-red-600 mb-4">🌡️ Temperatura</h3>
+      <p className="text-4xl font-bold text-red-600 mb-4">{stats.tempPromedio}°C</p>
+      <div className="space-y-2 text-sm text-gray-700">
+        <div className="flex justify-between">
+          <span>Máx:</span>
+          <span className="font-semibold">{stats.tempMax}°C</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Mín:</span>
+          <span className="font-semibold">{stats.tempMin}°C</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Prom:</span>
+          <span className="font-semibold">{stats.tempPromedio}°C</span>
+        </div>
+      </div>
+    </div>
+
+    {/* HUMEDAD */}
+    <div className="bg-purple-100 rounded-xl shadow-lg p-6">
+      <h3 className="text-lg font-bold text-purple-600 mb-4">💧 Humedad</h3>
+      <p className="text-4xl font-bold text-purple-600 mb-4">{stats.humedadPromedio}%</p>
+      <div className="space-y-2 text-sm text-gray-700">
+        <div className="flex justify-between">
+          <span>Máx:</span>
+          <span className="font-semibold">{stats.humedadMax}%</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Mín:</span>
+          <span className="font-semibold">{stats.humedadMin}%</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Prom:</span>
+          <span className="font-semibold">{stats.humedadPromedio}%</span>
+        </div>
+      </div>
+    </div>
+
+    {/* RADIACIÓN */}
+    <div className="bg-yellow-100 rounded-xl shadow-lg p-6">
+      <h3 className="text-lg font-bold text-yellow-600 mb-4">☀️ Radiación</h3>
+      <p className="text-4xl font-bold text-yellow-600 mb-4">{stats.radiacionPromedio}</p>
+      <div className="space-y-2 text-sm text-gray-700">
+        <div className="flex justify-between">
+          <span>Máx:</span>
+          <span className="font-semibold">{stats.radiacionMax}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Mín:</span>
+          <span className="font-semibold">{stats.radiacionMin}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Prom:</span>
+          <span className="font-semibold">{stats.radiacionPromedio}</span>
+        </div>
+      </div>
+    </div>
+
+    {/* PRECIPITACIÓN */}
+    <div className="bg-cyan-100 rounded-xl shadow-lg p-6">
+      <h3 className="text-lg font-bold text-cyan-600 mb-4">🌧️ Precipitación</h3>
+      <p className="text-4xl font-bold text-cyan-600 mb-4">{stats.precipitacionTotal} mm</p>
+      <div className="space-y-2 text-sm text-gray-700">
+        <div className="flex justify-between">
+          <span>Máx:</span>
+          <span className="font-semibold">{stats.precipitacionMax} mm</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Mín:</span>
+          <span className="font-semibold">{stats.precipitacionMin} mm</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Prom:</span>
+          <span className="font-semibold">{stats.precipitacionPromedio} mm</span>
+        </div>
+      </div>
+    </div>
+
+    {/* CACAO VIABLE */}
+    <div className="bg-green-100 rounded-xl shadow-lg p-6">
+      <h3 className="text-lg font-bold text-green-600 mb-4">🌰 Cacao Viable</h3>
+      <p className="text-4xl font-bold text-green-600 mb-4">{cultivosViables.cacao}</p>
+      <div className="space-y-2 text-sm text-gray-700">
+        <div className="flex justify-between">
+          <span>Días viables:</span>
+          <span className="font-semibold">{cultivosViables.cacao} días</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Porcentaje:</span>
+          <span className="font-semibold">{((cultivosViables.cacao / stats.totalRegistros) * 100).toFixed(1)}%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* TABS */}
       <div className="bg-white rounded-xl shadow-lg p-4">
