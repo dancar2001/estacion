@@ -216,29 +216,108 @@ fecha = r.timestamp;
   // ========================================================================
   // ESTADÍSTICAS
   // ========================================================================
+// ========================================================================
+// ESTADÍSTICAS - AGRUPADAS POR DÍA
+// ========================================================================
 const calcularEstadisticas = () => {
   if (datos.length === 0) return null;
 
-  const temps = datos.map((d) => d.temperatura);
-  const humeds = datos.map((d) => d.humedad);
-  const radiaciones = datos.map((d) => d.radiacion_solar);
-  const precipitaciones = datos.map((d) => d.precipitacion);
+  // ⭐ AGRUPAR DATOS POR DÍA
+  const datosPorDia = {};
+  
+  datos.forEach((d) => {
+    // Extraer solo la fecha (sin hora) - formato esperado: "DD/MM/YY" o "YYYY-MM-DD"
+    let fechaKey = d.date;
+    
+    // Si tiene hora, quitarla
+    if (fechaKey.includes(' ')) {
+      fechaKey = fechaKey.split(' ')[0];
+    }
+    
+    if (!datosPorDia[fechaKey]) {
+      datosPorDia[fechaKey] = {
+        temperaturas: [],
+        humedades: [],
+        radiaciones: [],
+        precipitaciones: []
+      };
+    }
+    
+    datosPorDia[fechaKey].temperaturas.push(d.temperatura);
+    datosPorDia[fechaKey].humedades.push(d.humedad);
+    datosPorDia[fechaKey].radiaciones.push(d.radiacion_solar);
+    datosPorDia[fechaKey].precipitaciones.push(d.precipitacion);
+  });
+
+  // ⭐ CALCULAR PROMEDIOS DIARIOS
+  const diasProcesados = Object.keys(datosPorDia).length;
+  
+  const promediosDiarios = Object.entries(datosPorDia).map(([fecha, valores]) => {
+    const avgTemp = valores.temperaturas.reduce((a, b) => a + b, 0) / valores.temperaturas.length;
+    const avgHum = valores.humedades.reduce((a, b) => a + b, 0) / valores.humedades.length;
+    const avgRad = valores.radiaciones.reduce((a, b) => a + b, 0) / valores.radiaciones.length;
+    const totalPrecip = valores.precipitaciones.reduce((a, b) => a + b, 0); // Precipitación se suma por día
+    
+    return {
+      fecha,
+      tempMax: Math.max(...valores.temperaturas),
+      tempMin: Math.min(...valores.temperaturas),
+      tempPromedio: avgTemp,
+      humedadMax: Math.max(...valores.humedades),
+      humedadMin: Math.min(...valores.humedades),
+      humedadPromedio: avgHum,
+      radiacionMax: Math.max(...valores.radiaciones),
+      radiacionMin: Math.min(...valores.radiaciones),
+      radiacionPromedio: avgRad,
+      precipitacionTotal: totalPrecip
+    };
+  });
+
+  // ⭐ EXTRAER MÁXIMOS Y MÍNIMOS DE LOS PROMEDIOS DIARIOS
+  const tempsMax = promediosDiarios.map(d => d.tempMax);
+  const tempsMin = promediosDiarios.map(d => d.tempMin);
+  const tempsPromedio = promediosDiarios.map(d => d.tempPromedio);
+  
+  const humedadesMax = promediosDiarios.map(d => d.humedadMax);
+  const humedadesMin = promediosDiarios.map(d => d.humedadMin);
+  const humedadesPromedio = promediosDiarios.map(d => d.humedadPromedio);
+  
+  const radiacionesMax = promediosDiarios.map(d => d.radiacionMax);
+  const radiacionesMin = promediosDiarios.map(d => d.radiacionMin);
+  const radiacionesPromedio = promediosDiarios.map(d => d.radiacionPromedio);
+  
+  const precipitacionesDiarias = promediosDiarios.map(d => d.precipitacionTotal);
+
+  // ⭐ CALCULAR ESTADÍSTICAS GLOBALES (basadas en días)
+  const promedio = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
 
   return {
     totalRegistros: datos.length,
-    tempPromedio: (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(2),
-    tempMax: Math.max(...temps).toFixed(2),
-    tempMin: Math.min(...temps).toFixed(2),
-    humedadPromedio: (humeds.reduce((a, b) => a + b, 0) / humeds.length).toFixed(2),
-    humedadMax: Math.max(...humeds).toFixed(2),
-    humedadMin: Math.min(...humeds).toFixed(2),
-    radiacionPromedio: (radiaciones.reduce((a, b) => a + b, 0) / radiaciones.length).toFixed(1),
-    radiacionMax: Math.max(...radiaciones).toFixed(1),
-    radiacionMin: Math.min(...radiaciones).toFixed(1),
-    precipitacionTotal: precipitaciones.reduce((a, b) => a + b, 0).toFixed(1),
-    precipitacionPromedio: (precipitaciones.reduce((a, b) => a + b, 0) / precipitaciones.length).toFixed(1),
-    precipitacionMax: Math.max(...precipitaciones).toFixed(1),
-    precipitacionMin: Math.min(...precipitaciones).toFixed(1),
+    totalDias: diasProcesados,
+    
+    // Temperatura (máximos y mínimos diarios)
+    tempMax: Math.max(...tempsMax).toFixed(2),
+    tempMin: Math.min(...tempsMin).toFixed(2),
+    tempPromedio: promedio(tempsPromedio).toFixed(2),
+    
+    // Humedad (máximos y mínimos diarios)
+    humedadMax: Math.max(...humedadesMax).toFixed(2),
+    humedadMin: Math.min(...humedadesMin).toFixed(2),
+    humedadPromedio: promedio(humedadesPromedio).toFixed(2),
+    
+    // Radiación (máximos y mínimos diarios)
+    radiacionMax: Math.max(...radiacionesMax).toFixed(1),
+    radiacionMin: Math.min(...radiacionesMin).toFixed(1),
+    radiacionPromedio: promedio(radiacionesPromedio).toFixed(1),
+    
+    // Precipitación (suma total y promedio diario)
+    precipitacionTotal: precipitacionesDiarias.reduce((a, b) => a + b, 0).toFixed(1),
+    precipitacionMax: Math.max(...precipitacionesDiarias).toFixed(1),
+    precipitacionMin: Math.min(...precipitacionesDiarias).toFixed(1),
+    precipitacionPromedio: promedio(precipitacionesDiarias).toFixed(1),
+    
+    // ⭐ DATOS POR DÍA (para usar en gráficos si necesitas)
+    promediosDiarios
   };
 };
 
@@ -534,8 +613,12 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
       <p className="text-4xl font-bold text-blue-600 mb-4">{stats.totalRegistros}</p>
       <div className="space-y-2 text-sm text-gray-700">
         <div className="flex justify-between">
-          <span>Datos procesados:</span>
+          <span>Registros:</span>
           <span className="font-semibold">{stats.totalRegistros}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Días analizados:</span>
+          <span className="font-semibold">{stats.totalDias} días</span>
         </div>
       </div>
     </div>
@@ -544,17 +627,18 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
     <div className="bg-red-100 rounded-xl shadow-lg p-6">
       <h3 className="text-lg font-bold text-red-600 mb-4">🌡️ Temperatura</h3>
       <p className="text-4xl font-bold text-red-600 mb-4">{stats.tempPromedio}°C</p>
+      <p className="text-xs text-gray-500 mb-2">Promedio diario</p>
       <div className="space-y-2 text-sm text-gray-700">
         <div className="flex justify-between">
-          <span>Máx:</span>
-          <span className="font-semibold">{stats.tempMax}°C</span>
+          <span>Máx. diaria:</span>
+          <span className="font-semibold text-red-600">{stats.tempMax}°C</span>
         </div>
         <div className="flex justify-between">
-          <span>Mín:</span>
-          <span className="font-semibold">{stats.tempMin}°C</span>
+          <span>Mín. diaria:</span>
+          <span className="font-semibold text-blue-600">{stats.tempMin}°C</span>
         </div>
         <div className="flex justify-between">
-          <span>Prom:</span>
+          <span>Prom. general:</span>
           <span className="font-semibold">{stats.tempPromedio}°C</span>
         </div>
       </div>
@@ -564,17 +648,18 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
     <div className="bg-purple-100 rounded-xl shadow-lg p-6">
       <h3 className="text-lg font-bold text-purple-600 mb-4">💧 Humedad</h3>
       <p className="text-4xl font-bold text-purple-600 mb-4">{stats.humedadPromedio}%</p>
+      <p className="text-xs text-gray-500 mb-2">Promedio diario</p>
       <div className="space-y-2 text-sm text-gray-700">
         <div className="flex justify-between">
-          <span>Máx:</span>
-          <span className="font-semibold">{stats.humedadMax}%</span>
+          <span>Máx. diaria:</span>
+          <span className="font-semibold text-purple-600">{stats.humedadMax}%</span>
         </div>
         <div className="flex justify-between">
-          <span>Mín:</span>
-          <span className="font-semibold">{stats.humedadMin}%</span>
+          <span>Mín. diaria:</span>
+          <span className="font-semibold text-blue-600">{stats.humedadMin}%</span>
         </div>
         <div className="flex justify-between">
-          <span>Prom:</span>
+          <span>Prom. general:</span>
           <span className="font-semibold">{stats.humedadPromedio}%</span>
         </div>
       </div>
@@ -584,17 +669,18 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
     <div className="bg-yellow-100 rounded-xl shadow-lg p-6">
       <h3 className="text-lg font-bold text-yellow-600 mb-4">☀️ Radiación</h3>
       <p className="text-4xl font-bold text-yellow-600 mb-4">{stats.radiacionPromedio}</p>
+      <p className="text-xs text-gray-500 mb-2">Promedio diario (kW/m²)</p>
       <div className="space-y-2 text-sm text-gray-700">
         <div className="flex justify-between">
-          <span>Máx:</span>
-          <span className="font-semibold">{stats.radiacionMax}</span>
+          <span>Máx. diaria:</span>
+          <span className="font-semibold text-yellow-600">{stats.radiacionMax}</span>
         </div>
         <div className="flex justify-between">
-          <span>Mín:</span>
-          <span className="font-semibold">{stats.radiacionMin}</span>
+          <span>Mín. diaria:</span>
+          <span className="font-semibold text-blue-600">{stats.radiacionMin}</span>
         </div>
         <div className="flex justify-between">
-          <span>Prom:</span>
+          <span>Prom. general:</span>
           <span className="font-semibold">{stats.radiacionPromedio}</span>
         </div>
       </div>
@@ -604,17 +690,18 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
     <div className="bg-cyan-100 rounded-xl shadow-lg p-6">
       <h3 className="text-lg font-bold text-cyan-600 mb-4">🌧️ Precipitación</h3>
       <p className="text-4xl font-bold text-cyan-600 mb-4">{stats.precipitacionTotal} mm</p>
+      <p className="text-xs text-gray-500 mb-2">Total acumulado</p>
       <div className="space-y-2 text-sm text-gray-700">
         <div className="flex justify-between">
-          <span>Máx:</span>
-          <span className="font-semibold">{stats.precipitacionMax} mm</span>
+          <span>Máx. diaria:</span>
+          <span className="font-semibold text-cyan-600">{stats.precipitacionMax} mm</span>
         </div>
         <div className="flex justify-between">
-          <span>Mín:</span>
-          <span className="font-semibold">{stats.precipitacionMin} mm</span>
+          <span>Mín. diaria:</span>
+          <span className="font-semibold text-blue-600">{stats.precipitacionMin} mm</span>
         </div>
         <div className="flex justify-between">
-          <span>Prom:</span>
+          <span>Prom. diario:</span>
           <span className="font-semibold">{stats.precipitacionPromedio} mm</span>
         </div>
       </div>
@@ -626,8 +713,8 @@ const COLORS = ['#ef4444', '#f59e0b', '#8B4513', '#22c55e', '#eab308'];
       <p className="text-4xl font-bold text-green-600 mb-4">{cultivosViables.cacao}</p>
       <div className="space-y-2 text-sm text-gray-700">
         <div className="flex justify-between">
-          <span>Días viables:</span>
-          <span className="font-semibold">{cultivosViables.cacao} días</span>
+          <span>Registros viables:</span>
+          <span className="font-semibold">{cultivosViables.cacao}</span>
         </div>
         <div className="flex justify-between">
           <span>Porcentaje:</span>
